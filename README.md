@@ -2,7 +2,7 @@
 
 **Play games with your AI agent.**
 
-moyu (摸鱼, literally "touching fish") is Chinese slang for goofing off when you're supposed to be busy.
+moyu means "slack off".
 
 [中文说明](README.zh-CN.md)
 
