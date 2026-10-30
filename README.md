@@ -47,7 +47,7 @@ moyu needs Node.js 22 or later and a browser.
 /plugin install moyu@cuca
 ```
 
-Run `/reload-plugins` (or restart Claude Code), then say "let's play a game" or 「来一局」.
+Run `/reload-plugins` (or restart Claude Code), then say "let's play a game".
 
 ### DeepSeek Harness
 
@@ -56,7 +56,7 @@ git clone https://github.com/cucarol/moyu
 dsh plugin --profile web add /path/to/moyu/dsh
 ```
 
-In DSH Desktop, add a plugin from a local path under 插件 / Plugins and give it the clone's `dsh` folder instead. Restart DSH, open a session with skills (标准模式) and say 「来一局」. [dsh/README.md](dsh/README.md) has the details.
+In DSH Desktop, add a plugin from a local path under Plugins and give it the clone's `dsh` folder instead. Restart DSH, open a session with skills and say "let's play a game". [dsh/README.md](dsh/README.md) has the details.
 
 <details>
 <summary>Claude Code without the plugin system</summary>
