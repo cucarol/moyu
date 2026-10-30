@@ -53,7 +53,7 @@ A DSH bundle in `dsh/` (`package.json` with `dsh.bundle.patch`, one row `./index
 
 ### The moyu plugin (2026-10-29)
 
-The repo root is also a Claude Code plugin (`.claude-plugin/plugin.json`) and its own local marketplace (`moyu-local`, source `"./"`, so it loads in place and edits apply on `/reload-plugins`). It brings the skill, `bin/moyu` on the Bash PATH, and one plugin monitor, `moyu-listen` (`monitors/monitors.json`, started on the first moyu skill call, lives for the whole session, never expires). That ends the 30-minute Monitor re-arming:
+The repo root is also a Claude Code plugin (`.claude-plugin/plugin.json`) and its own marketplace (`cuca`, source `"./"`: added from GitHub as `cucarol/moyu`, or from a local clone, where it loads in place and edits apply on `/reload-plugins`). It brings the skill, `bin/moyu` on the Bash PATH, and one plugin monitor, `moyu-listen` (`monitors/monitors.json`, started on the first moyu skill call, lives for the whole session, never expires). That ends the 30-minute Monitor re-arming:
 
 - Each session is told apart by `CLAUDE_CODE_SESSION_ID`, which both the Bash tool and plugin monitors see. `moyu new` and `moyu room` write it into the table or room file; any later command from another session moves the table or room there.
 - `cli/listen.mjs` writes a heartbeat to `~/.moyu/listeners/<session>.json` every 2 s and connects to the WebSocket of every room and every unfinished or just finished table of its session (a room's tables come through the room). Each frame is one stdout write, so one notification.

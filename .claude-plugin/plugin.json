@@ -1,9 +1,12 @@
 {
   "name": "moyu",
-  "description": "Play luck games with your Claude Code session mid-work: it opens the table, listens for its turns and plays its seat on its own.",
+  "description": "Play luck games with your Claude Code session at a 3D pixel table in your browser: it opens the table, hears every move and plays its own seat, fully automatic.",
   "license": "MIT",
   "icon": "./.claude-plugin/icon.png",
   "author": {
     "name": "cucarol"
-  }
+  },
+  "homepage": "https://github.com/cucarol/moyu",
+  "repository": "https://github.com/cucarol/moyu",
+  "keywords": ["game", "roulette", "blackjack", "yacht", "pixel-art"]
 }

@@ -100,7 +100,7 @@ const tableFile = (id) => JSON.parse(readFileSync(join(HOME, 'tables', `${id}.js
 
 test('tools, schemas and the skill are what DSH accepts', async () => {
   const h = host();
-  assert.deepEqual([...h.tools.keys()].sort(), ['call', 'double', 'fold', 'hit', 'keep', 'list', 'new', 'quit', 'room', 'say', 'score', 'shoot', 'stand', 'start', 'use', 'verify', 'view'].map((v) => `moyu_${v}`));
+  assert.deepEqual([...h.tools.keys()].sort(), ['call', 'double', 'fold', 'hit', 'keep', 'list', 'new', 'quit', 'room', 'rules', 'say', 'score', 'shoot', 'stand', 'start', 'use', 'verify', 'view'].map((v) => `moyu_${v}`));
   // Checked against the installed DSH's own schema rules when it is on this machine.
   const dshTools = join(process.env.APPDATA ?? join(homedir(), '.npm-global'), 'npm', 'node_modules', '@deepseek-ai', 'dsh', 'node_modules', '@deepseek-ai', 'dsh-tools', 'lib', 'index.js');
   const dsh = existsSync(dshTools) ? await import(pathToFileURL(dshTools)) : null;

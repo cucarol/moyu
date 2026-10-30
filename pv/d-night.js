@@ -12,6 +12,8 @@
 import { sessionScreen, cutShot } from './cubicle/screen.js';
 const L = (zh, en) => ({ 'zh-CN': zh, en });
 const HUD = { mode: 'bubble', bubble: 1.25 }; // only Clawd's lines on screen, big enough to read in the film
+// a line on its own holds for the Chinese line's read time (director readMs), so the longer
+// English one keeps the same beats
 const FREEZE = 12500; // yachtFreeze, in this part's time
 const LAND = 15000; // yachtLand
 const CUT = cutShot('laptop', 240);
@@ -42,10 +44,10 @@ export default {
     { scene: 'starsProgress', tween: [0, 1], ms: LAND - 200, ease: 'sine', alongside: true },
     { at: 1000, scene: 'laptop', tween: [1, 0], ms: 1900, ease: 'inOut', alongside: true },
     { at: 2700, hud: HUD },
-    { at: 2900, say: L('最后一局！', 'Last one!'), mood: 'happy' },
-    { at: 4100, say: L('就差一个快艇。', 'Just the yacht left.'), mood: 'flat' },
+    { at: 2900, say: L('最后一局！', 'Last one!'), mood: 'happy', hold: 1200 },
+    { at: 4100, say: L('就差一个快艇。', 'Just the Yacht left.'), mood: 'flat', hold: 1440 },
     { at: 5600, who: 'opp', keep: [], roll: [2, 3, 5, 1, 2], after: 0 },
-    { at: 8200, say: L('……全部重掷。', '…all five again.'), mood: 'smug' },
+    { at: 8200, say: L('……全部重掷。', '…reroll all five.'), mood: 'smug', hold: 1440 },
     { at: 10200, cam: 'seat', ms: 1500, ease: 'inOut', alongside: true }, // on Clawd and its cup, so the throw stays in frame
     // the throw: the dice leave the cup 640 ms in; the scene stops with them in the air
     { at: FREEZE - 700, who: 'opp', keep: [], roll: [6, 6, 6, 6, 6], alongside: true, hud: 'none' },

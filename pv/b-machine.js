@@ -11,6 +11,8 @@
 import { sessionScreen, cutShot } from './cubicle/screen.js';
 const L = (zh, en) => ({ 'zh-CN': zh, en });
 const HUD = { mode: 'bubble', bubble: 1.25 }; // only Clawd's lines on screen, big enough to read in the film
+// a line on its own holds for the Chinese line's read time (director readMs), so the longer
+// English one keeps the same beats
 const PASS = 17500; // the tests pass (story.js), in this part's time
 const GLITCH = [0.35, 0.8]; // the session tearing into the room's tube, then the screen is the room's
 // the small CRT on top at the right; its glass is 288 texels tall; the near plane just short of it
@@ -40,16 +42,16 @@ export default {
     { at: 2300, hud: HUD },
     // its blank on itself plays out for about 3.6 s and the live one 1.7 s after its beat
     // starts, so the beats are pinned back from liveShot (12.5 s here)
-    { at: 1900, say: L('三分钟，够打一局。', 'Three minutes. Enough for a round.'), mood: 'happy' },
+    { at: 1900, say: L('三分钟，够打一局。', 'Three minutes. One round.'), mood: 'happy', hold: 1680 },
     { at: 3700, who: 'opp', use: 'cot', say: L('让我想想……', 'Let me think…'), mood: 'squint', after: 0 },
     { at: 5100, who: 'opp', shoot: 'self', say: L('空的～', 'Blank~'), mood: 'smug', after: 0 },
-    { at: 8800, who: 'opp', use: 'temp', say: L('下一发，温度拉满。', 'Next one: temperature to max.'), mood: 'angry', after: 0 },
+    { at: 8800, who: 'opp', use: 'temp', say: L('下一发，温度拉满。', 'Next shot: max temperature.'), mood: 'angry', after: 0 },
     { at: 10800, who: 'opp', shoot: 'other', after: 0 },
     { say: L('？？？', '???'), mood: 'wide', after: 200, hold: 700 },
     // back to the whole room, slowly enough to carry on through the wait
     { cam: 'wide', ms: 5000, ease: 'inOut', alongside: true },
     { emote: '😭', after: 300, hold: 900 },
-    { say: L('……测试快好了。', '…tests are nearly done.'), mood: 'flat', after: 100 },
+    { say: L('……测试快好了。', '…tests are almost done.'), mood: 'flat', after: 100, hold: 1560 },
     // all pass: the wave, Clawd cheering
     { at: PASS, scene: 'rackWave', avatar: 'cheer' },
     { at: PASS + 200, hud: 'none' },

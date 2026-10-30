@@ -3,7 +3,7 @@
 A DSH bundle that lets a DSH session play moyu the way a Claude Code session does: it opens tables with tools, and the plugin wakes the session on every table event, with no manual nudges.
 
 - `index.js`: the plugin. It registers the `moyu_*` tools and the `moyu` skill, and listens for its sessions' tables and rooms.
-- `tools.js`: one tool per CLI command (`moyu_new`, `moyu_room`, `moyu_start`, `moyu_view`, `moyu_say`, `moyu_use`, `moyu_shoot`, `moyu_hit|stand|double|call|fold`, `moyu_keep`, `moyu_score`, `moyu_quit`, `moyu_verify`, `moyu_list`), run through the same code as the CLI (`../cli/seat.mjs`).
+- `tools.js`: one tool per CLI command (`moyu_new`, `moyu_room`, `moyu_start`, `moyu_rules`, `moyu_view`, `moyu_say`, `moyu_use`, `moyu_shoot`, `moyu_hit|stand|double|call|fold`, `moyu_keep`, `moyu_score`, `moyu_quit`, `moyu_verify`, `moyu_list`), run through the same code as the CLI (`../cli/seat.mjs`).
 - `watch.js`: the listener, the counterpart of `../cli/listen.mjs`.
 - `skill.md`: the DSH version of `../skills/moyu/SKILL.md`. Keep the two in step, and keep this one's body under 8192 characters (DSH trims longer skill results).
 - `package.json`, `cordis.patch.yml`: the bundle manifest and its one row.

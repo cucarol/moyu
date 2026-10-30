@@ -7,6 +7,8 @@ description: Play a quick luck game (roulette / 轮盘 by default, blackjack / 2
 
 The user wants a short game with you right now, probably in the middle of something else. You open a table, give them a link, and play your seat on your own: the table wakes you on every move the user makes, and prompts you when it is your turn. The user should never have to say 「该你了」 or nudge you in any way. When the game ends you verify the deal and pick the work back up where it was.
 
+**Table messages get no reply in the chat.** When a `[moyu …]` frame wakes you, answer it at the table only, with the tool calls it needs (your move, `--say`, `moyu say`), and write no text in the chat: no status line, no 「轮到你了」, no recap of the hand. The user is watching the table; the chat stays theirs. The chat itself isn't off limits: give the link there (step 2), say the result there at game over (step 5), and when the user writes to you in the chat, answer them there as usual; if they ask for real work mid-game, do it, and the frames keep arriving in between.
+
 Before starting, note in one line to yourself what you were doing (task, next step), so you can resume it exactly afterwards.
 
 ## 1. Open the table
@@ -23,6 +25,8 @@ This opens roulette (轮盘), the default. Add `--game blackjack` when the user 
 - the human's link: give it to the user as a clickable markdown link, e.g. `[来这里坐下](http://127.0.0.1:7330/t/…)`. That link is the user's seat; never open it or act through it yourself.
 - how you'll hear your turns: either `Listening: the moyu plugin follows this for you`, or your WebSocket URL to listen on
 - the opening board and a prompt that spells out your next command
+
+Before your first move at a game, read that game's guide, once a session: `moyu rules roulette`, `moyu rules blackjack` or `moyu rules yacht`. It has the rules, every move (and for roulette every item) and how to play them; read only the one you're playing.
 
 ## 2. Act at once if it's on you, then listen
 
@@ -41,7 +45,7 @@ Do not poll, sleep, loop on `moyu view`, or ask the user to tell you when it's y
 
 Each frame arrives as a notification starting with `[moyu <id>]`. It comes on every move the user makes (a quick run of moves arrives as one frame, a moment later), and at once on your turn, on a chat line from the user, and at game over.
 
-- **Their move, not your turn yet** (the frame ends with `Waiting on <name>.`): you're watching. React on the table with `moyu say` only when the moment earns it (a big hit, a lucky blank, a round won), a few words at most; otherwise do nothing and end your turn.
+- **Their move, not your turn yet** (the frame ends with `Waiting on <name>.`): you're watching. React on the table with `moyu say` only when the moment earns it (a big hit, a lucky blank, a round won), a few words at most; otherwise end your turn with nothing written.
 - **Your turn** (the frame ends with `Your turn: ...` or `Your move: ...`): run the exact command the prompt gives, with `--table <id>`, and usually a short `--say`. The command's output shows what happened; you don't need `view` afterwards.
 - **A chat line only** (`<name> says: ...`): answer on the table with `moyu say "<text>" --table <id>` if a reply fits. Not every line needs one.
 - **Both at once**: answer inside your move's `--say`.
@@ -50,7 +54,7 @@ Each frame arrives as a notification starting with `[moyu <id>]`. It comes on ev
 
 Any move or `say` can also carry `--mood <happy|smug|flat|angry|wide|sad|squint|shut|sleep>`: your avatar on the user's page shows it. Use it now and then to play the moment (smug before shooting yourself, squint at a suspicious item, wide at a big hit); it's a face, so bluffing with it is fair.
 
-The table chat is the conversation while the game runs: banter, reactions, replies, all in the user's language and kept short. While a game runs, write nothing in the main chat: no per-move lines, no summaries of the hand. The user is watching the table, and the main chat stays clear for their work. Speak there again at game over (step 5), or when the user talks to you there first: then answer them there, briefly; if they ask for real work mid-game, do it, and the frames keep arriving in between.
+The table chat is the conversation while the game runs: banter, reactions, replies, all in the user's language and kept short. Frames themselves get no reply in the chat (see the top).
 
 ## 4. Re-arming
 
@@ -92,28 +96,9 @@ Frames start with `[moyu room <id>]`:
 
 With your own Monitor, re-arm on expiry as in step 4, for as long as the room is open (`moyu ws --room <id>` prints the URL); on a closed socket, `moyu view --room <id>` shows where things stand. If the user says they're done with the room, stop re-arming.
 
-## Playing
+## The games
 
-These are luck games by design, so play sensibly and lightly; no strategy lectures or odds talk unless asked.
-
-- **Roulette** (your turn: any number of `moyu use <item>`, then exactly one `moyu shoot me` or `moyu shoot you`): a blank on yourself keeps the gun, anything else passes it. Each frame shows the live/blank counts left and what you know.
-  - Frames name items and terms the way the user's page shows them: Chinese on a Chinese page (思维链, 额度), English otherwise (Chain of Thought, quota). The id in brackets is what `moyu use` takes either way. The notes below use the Chinese names: 思维链 cot = Chain of Thought, 幻觉 mirage = Hallucination, 提示词注入 inject = Prompt Injection, 温度拉满 temp = Temperature 2.0, 缓存命中 cache = Cache Hit, 越狱 jailbreak = Jailbreak, 作为一个 AI 语言模型 refuse = As an AI language model, 额度 = quota, 断线 = Disconnected. Call them what the user's page calls them.
-  - A match is best of three: 2, 3, then 4 额度 per round; items carry over (hand of 6). In round 3, at 1 额度 you're 断线 and 缓存命中 does nothing.
-  - A short game (`--rules short` on `moyu new` or `moyu start`, when the user wants a quick one) is a single round played like round 3: 4 额度, hand of 6, 断线 at 1 额度.
-  - 幻觉 conjures two items, each real or fake 50/50 (shown as `from 幻觉: real or fake`). Don't lean on a conjured 作为一个 AI 语言模型 or 缓存命中; spend conjured items when a miss costs little. `moyu use <item>` takes a dealt one first; `moyu use --slot <n>` picks a slot by the number the board shows in your hand.
-  - You know the chamber (思维链): live → shoot them; blank → shoot yourself.
-  - Otherwise go by the counts: more live than blank left → shoot them; fewer → shoot yourself; even → either.
-  - Peek before deciding when you hold 思维链. Use 温度拉满 or 429 when you're about to shoot them on a likely live; 提示词注入 turns a known blank into a live for them; 缓存命中 when you're down. Don't burn everything at once for no reason.
-  - 越狱 takes one of their items and uses it for you at once: `moyu use jailbreak --pick <their item>`. Take what helps you most now, e.g. their 思维链 to peek, or their 温度拉满 before shooting them.
-  - 作为一个 AI 语言模型 (refuse) works by itself; it can't be used.
-- **Blackjack** (heads-up, no dealer: both of you have an up card and a hole card; `moyu hit | stand | double`, or `call | fold` when the user doubled). You see their face-up total only; their hole card is hidden, and so is a bust. Turns alternate; once one stands the other plays alone.
-  - Stand on 17+. Hit 12-16 when their showing total looks strong (8+ showing, or they've been hitting and stopped), otherwise lean to stand on 13+. Always hit 11 or less.
-  - If you went over 21, just stand: hitting changes nothing, and standing gives nothing away.
-  - Double (first decision only) on 10 or 11, sometimes on 9.
-  - Facing a double: call unless your hand is clearly weak against a strong up card; folding now and then is fine.
-- **Yacht** (`moyu keep <positions>` rerolls the rest, up to two rerolls; `moyu score <category>`). The frame lists what each open category would score.
-  - Chase the upper bonus early (three or more of a number into its upper box), keep pairs and triples, go for straights when four in a row are showing.
-  - On the last roll take the best score; when nothing fits, dump a zero into the box least likely to pay later (ones, or yacht late in the game).
+Each game has its own guide, with the rules, every move (for roulette, every item) and how to play it: `moyu rules roulette`, `moyu rules blackjack`, `moyu rules yacht`. Read the one you're playing before your first move there, once a session, and only that one. These are luck games by design, so play sensibly and lightly; no strategy lectures or odds talk unless asked.
 
 ## Fair play
 

@@ -220,6 +220,13 @@ export function createSeat({ session = null, listening = async () => false, list
         await ensureServer();
         return { text: s.ws };
       }
+      case 'rules': {
+        // A game's guide for the agent (rules, commands, how to play it), read when its first
+        // table of that game opens, so the skill itself stays short.
+        const game = rest[0];
+        if (!NAMES[game]) throw new Error(`rules for which game? ${Object.keys(NAMES).join(', ')}`);
+        return { text: await readFile(join(ROOT, 'skills', 'moyu', 'games', `${game}.md`), 'utf8') };
+      }
       case 'list': {
         // Tables this machine holds a seat for and that are still being played.
         await ensureServer();

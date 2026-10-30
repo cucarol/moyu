@@ -24,7 +24,7 @@ export const ASKS = {
 };
 // each job: its card, when it's done (a part and its seconds: the beat its world lights up on)
 const JOBS = {
-  test: { cmd: 'npm test', label: ['跑测试中', 'Running'], total: 1204, done: ['machine', 16.8], doneText: ['1204 个全部通过', 'all 1204 passed'], said: ['全部通过。', 'All green.'] },
+  test: { cmd: 'npm test', label: ['跑测试中', 'Testing'], total: 1204, done: ['machine', 16.8], doneText: ['1204 个全部通过', 'all 1204 passed'], said: ['全部通过。', 'All green.'] },
   build: { cmd: 'npm run build', label: ['打包中', 'Building'], total: 846, done: ['raft', 12.5], doneText: ['打包完成', 'built'], said: ['打好了。', 'Built.'] },
   deploy: { cmd: 'npm run deploy', label: ['部署中', 'Deploying'], total: 12, done: ['yacht', 15.0], doneText: ['已上线', 'live'], said: ['上线了。', "It's live."] },
 };

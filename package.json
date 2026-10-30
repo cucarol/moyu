@@ -2,7 +2,7 @@
   "name": "moyu",
   "version": "0.1.0",
   "private": true,
-  "description": "Play luck games (roulette, 21, Yacht dice) with the coding agent you are working with: a Claude Code plugin and a DSH bundle",
+  "description": "Play luck games (roulette, 21, Yacht dice) with your AI agent, fully automatic: a Claude Code plugin and a DSH bundle",
   "license": "MIT",
   "author": "cucarol",
   "homepage": "https://github.com/cucarol/moyu#readme",

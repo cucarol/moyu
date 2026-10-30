@@ -478,8 +478,8 @@ const plop = document.querySelector('.plop');
 // the line in two shouts, at a whole multiple of the font's 12px so every glyph pixel stays
 // square: the words, side (of its head), how far up, the tilt
 const LINES = {
-  noon: [L('等测试的时候', 'While the tests run…'), L('玩会游戏吧！', "let's play!")],
-  dusk: [L('等打包的时候', 'While it builds…'), L('再来一局！', 'one more round!')],
+  noon: [L('等测试的时候', 'While tests run'), L('玩会游戏吧！', "let's play!")],
+  dusk: [L('等打包的时候', 'While it builds'), L('再来一局！', 'one more round!')],
 }[SHOT];
 const SHOUTS = [
   { side: -1, up: 30, tilt: -4 },
@@ -581,7 +581,7 @@ const hook = document.querySelector('#hook');
 const face = hook.querySelector('.face');
 const dim = document.querySelector('#dim');
 if (B.hook) {
-  hook.querySelector('.words').textContent = L('工作好无聊', 'Work is so boring');
+  hook.querySelector('.words').textContent = L('工作好无聊', 'Sooo bored');
   pixelEmoji(face, '😭', 24, 15);
 }
 function hookAt(T) {

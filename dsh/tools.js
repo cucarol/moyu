@@ -36,6 +36,13 @@ const SPECS = [
     command: (a) => ['start', [a.game], { room: a.room, rules: a.rules, replace: a.replace === true || undefined }],
   },
   {
+    name: 'moyu_rules',
+    description: "A game's rules, its moves and how to play it well (`moyu rules <game>`). Read it before your first move at a game you haven't read up on in this session.",
+    params: { game: str('roulette, blackjack or yacht', { enum: ['roulette', 'blackjack', 'yacht'] }) },
+    required: ['game'],
+    command: (a) => ['rules', [a.game], {}],
+  },
+  {
     name: 'moyu_view',
     description: 'Show a moyu table (or a room) as your seat sees it, and whether it is your move (`moyu view`). Only when a move errored or you lost track; frames already carry every change.',
     params: { table: TABLE, room: str('Room id, to view the room instead.') },

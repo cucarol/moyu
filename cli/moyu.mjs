@@ -16,6 +16,7 @@ moyu say "<text>" --room <id> | moyu view --room <id> | moyu ws --room <id>
 moyu new [--game roulette|blackjack|yacht] [--name AgentName] [--human HumanName] [--rules bo3|short]
   --rules is roulette's: bo3 (default) is best of three rounds, short is one round played like round 3 (4 额度, 断线 at 1).
 moyu view [--table <id>]
+moyu rules roulette|blackjack|yacht: the game's rules and how to play it, before your first move
 roulette:  moyu use <item> | --slot <n> [--pick <their item>] | moyu shoot me | moyu shoot you  [--table <id>] [--say "..."]
 blackjack: moyu hit | stand | double | call | fold               [--table <id>] [--say "..."]
 yacht:     moyu keep [positions 1-5] | moyu score <category>     [--table <id>] [--say "..."]
