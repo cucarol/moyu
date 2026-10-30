@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>摸鱼 · 声音挑选</title>
+<!-- The listening page: scripts/sound/clips.py fills in DATA and writes it to
+     renders/listen/index.html, next to its clips/. Works opened from disk. -->
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d1d1b; --soft: #6b6a64; --line: #dddbd3;
+    --good: #1f8a4c; --good-bg: #e3f4ea; --bad: #b3261e; --bad-bg: #f9e4e2; --play: #2d5bd7; --a: #8a5a00; --b: #5b3cc4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151614; --card: #1f201d; --ink: #ecebe5; --soft: #9a998f; --line: #34352f;
+      --good: #4fd38a; --good-bg: #173726; --bad: #ff7a70; --bad-bg: #3a1a18; --play: #7ea2ff; --a: #e0b45c; --b: #b39dff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, "Microsoft YaHei", sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  header h1 { font-size: 17px; margin: 0; }
+  #count { font-variant-numeric: tabular-nums; }
+  #count b { color: var(--good); }
+  #count b.bad { color: var(--bad); }
+  header .grow { flex: 1; }
+  button { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  button:hover { border-color: var(--soft); }
+  main { max-width: 980px; margin: 0 auto; padding: 8px 16px 80px; }
+  .intro { color: var(--soft); margin: 10px 0 4px; }
+  .intro b.a { color: var(--a); } .intro b.b { color: var(--b); }
+  nav { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  nav a { color: var(--play); text-decoration: none; }
+  h2 { font-size: 19px; margin: 34px 0 4px; padding-top: 6px; border-top: 2px solid var(--ink); }
+  h3 { font-size: 16px; margin: 20px 0 6px; }
+  h4 { font-size: 14px; margin: 14px 0 6px; color: var(--soft); font-weight: 600; }
+  .item { border-top: 1px solid var(--line); padding: 10px 0; }
+  .name { margin-bottom: 6px; }
+  .name code { color: var(--soft); font-size: 13px; margin-left: 6px; }
+  .name .where { color: var(--soft); font-size: 13px; margin-left: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .clip { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px 8px; align-items: center; }
+  .clip.good { border-color: var(--good); box-shadow: inset 0 0 0 1px var(--good); background: var(--good-bg); }
+  .clip.bad { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); background: var(--bad-bg); }
+  .clip.none { display: flex; color: var(--soft); background: transparent; border-style: dashed; }
+  .ver { font-weight: 700; font-size: 13px; }
+  .ver.A { color: var(--a); } .ver.B { color: var(--b); }
+  .play { width: 34px; height: 30px; padding: 0; color: var(--play); font-size: 14px; }
+  .play.on { background: var(--play); color: var(--card); border-color: var(--play); }
+  .markbtn.good.on { background: var(--good); color: #fff; border-color: var(--good); font-weight: 700; }
+  .markbtn.bad.on { background: var(--bad); color: #fff; border-color: var(--bad); font-weight: 700; }
+  .clip input { grid-column: 1 / -1; width: 100%; font: inherit; font-size: 13px; color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; }
+  .bar { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--play); }
+  #out { position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: 900px; margin: 0 auto; height: 40vh; display: none; z-index: 3; font: 12px/1.4 ui-monospace, monospace; background: var(--card); color: var(--ink); border: 1px solid var(--soft); border-radius: 8px; padding: 8px; }
+  #toast { color: var(--good); }
+  @media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>摸鱼 · 声音挑选</h1>
+  <span id="count"></span>
+  <span class="grow"></span>
+  <span id="toast"></span>
+  <button id="copy">复制结果</button>
+</header>
+<main>
+  <p class="intro"><b class="a">A</b> = 游戏自己合成的（Web Audio，v1）　<b class="b">B</b> = Surge XT（v2）。同一个声音的 A 和 B 并排放着，同一对调到差不多的响度。
+    点 ▶ 播放，再点一下停止；觉得好用就点「好用」，不想要就点「不好用」，都还行就不用点（再点一下可以取消）。备注随便写。标记会自动保存在这个浏览器里。</p>
+  <nav id="nav"></nav>
+  <div id="list"></div>
+</main>
+<textarea id="out" readonly></textarea>
+<script>
+const DATA = /*DATA*/null;
+const KEY = 'moyu-listen-marks';
+let marks = {}; // clip key -> { mark: 'good' | 'bad' | undefined, note }
+try { marks = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { marks = {}; }
+for (const m of Object.values(marks)) if (m && m.good === true) { m.mark = 'good'; delete m.good; } // (marked before 不好用 existed)
+const markOf = (key) => (marks[key] && marks[key].mark) || '';
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(marks)); } catch (e) { /* not saved, still works */ } };
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const VER = { A: 'A 合成', B: 'B Surge XT' };
+const all = []; // every clip: { key, id, version, name }
+
+// one player for the page: playing a clip stops any other
+const audio = new Audio();
+let playing = null; // { btn, bar }
+function stop() {
+  audio.pause();
+  if (playing) { playing.btn.classList.remove('on'); playing.btn.textContent = '▶'; playing.bar.style.width = '0'; }
+  playing = null;
+}
+audio.addEventListener('ended', stop);
+audio.addEventListener('timeupdate', () => { if (playing && audio.duration) playing.bar.style.width = (100 * audio.currentTime / audio.duration) + '%'; });
+
+function clipCard(item, version) {
+  const src = item.clips[version];
+  if (!src) return el('div', 'clip none', VER[version] + '：这个版本没有这个声音');
+  const key = item.id + '/' + version;
+  all.push({ key, id: item.id, version, name: item.zh });
+  const m = marks[key] || {};
+  const card = el('div', 'clip' + (m.mark ? ' ' + m.mark : ''));
+  const play = el('button', 'play', '▶');
+  play.title = '播放 / 停止';
+  const bar = el('div', 'bar'); const fill = el('i'); bar.append(fill);
+  play.onclick = () => {
+    const mine = playing && playing.btn === play;
+    stop();
+    if (mine) return;
+    audio.src = src;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    playing = { btn: play, bar: fill };
+    play.classList.add('on'); play.textContent = '■';
+  };
+  // 好用 / 不好用, one at a time; neither (the default) is 还好
+  const LABEL = { good: '好用', bad: '不好用' };
+  const btns = {};
+  const show = () => {
+    const now = markOf(key);
+    for (const k of ['good', 'bad']) {
+      btns[k].classList.toggle('on', now === k);
+      btns[k].textContent = (now === k ? '✓ ' : '') + LABEL[k];
+      card.classList.toggle(k, now === k);
+    }
+  };
+  for (const k of ['good', 'bad']) {
+    btns[k] = el('button', 'markbtn ' + k);
+    btns[k].onclick = () => {
+      marks[key] = { ...(marks[key] || {}), mark: markOf(key) === k ? undefined : k };
+      show(); save(); count();
+    };
+  }
+  show();
+  const note = el('input');
+  note.placeholder = '备注';
+  note.value = m.note || '';
+  note.oninput = () => { marks[key] = { ...(marks[key] || {}), note: note.value }; save(); };
+  card.append(play, el('span', 'ver ' + version, VER[version]), btns.good, btns.bad, bar, note);
+  return card;
+}
+
+function render() {
+  const list = document.getElementById('list');
+  const nav = document.getElementById('nav');
+  DATA.sections.forEach((sec, i) => {
+    const h = el('h2', null, sec.title); h.id = 's' + i; list.append(h);
+    const a = el('a', null, sec.title); a.href = '#s' + i; nav.append(a);
+    if (sec.note) list.append(el('p', 'intro', sec.note));
+    for (const part of sec.parts) {
+      if (part.title) list.append(el('h3', null, part.title));
+      if (part.note) list.append(el('p', 'intro', part.note));
+      for (const group of part.groups) {
+        list.append(el(part.title ? 'h4' : 'h3', null, group.title));
+        for (const item of group.items) {
+          const box = el('div', 'item');
+          const name = el('div', 'name', item.zh);
+          name.append(el('code', null, item.en));
+          if (item.where) name.append(el('span', 'where', item.where));
+          const pair = el('div', 'pair');
+          pair.append(clipCard(item, 'A'), clipCard(item, 'B'));
+          box.append(name, pair);
+          list.append(box);
+        }
+      }
+    }
+  });
+}
+
+function count() {
+  const good = all.filter((c) => markOf(c.key) === 'good').length;
+  const bad = all.filter((c) => markOf(c.key) === 'bad').length;
+  document.getElementById('count').innerHTML = '好用 <b>' + good + '</b>　不好用 <b class="bad">' + bad + '</b>　未标 ' + (all.length - good - bad) + '　/ 共 ' + all.length + ' 个片段';
+}
+
+document.getElementById('copy').onclick = async () => {
+  // mark: 好用, 不好用, or '' (还好)
+  const rows = all.map((c) => ({ id: c.id, version: c.version, name: c.name, mark: { good: '好用', bad: '不好用' }[markOf(c.key)] || '', note: (marks[c.key] && marks[c.key].note) || '' }));
+  const text = JSON.stringify({ good: rows.filter((r) => r.mark === '好用').length, bad: rows.filter((r) => r.mark === '不好用').length, total: rows.length, clips: rows }, null, 1);
+  const out = document.getElementById('out');
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+    out.value = text; out.style.display = 'block'; out.select();
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+  }
+  const toast = document.getElementById('toast');
+  toast.textContent = ok ? '已复制' : '复制不了，请在下面的框里全选复制';
+  if (!ok) { out.value = text; out.style.display = 'block'; out.select(); }
+  setTimeout(() => { toast.textContent = ''; }, 2500);
+};
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.getElementById('out').style.display = 'none'; stop(); } });
+
+render();
+count();
+</script>
+</body>
+</html>

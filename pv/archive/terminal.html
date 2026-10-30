@@ -1,0 +1,438 @@
+<!doctype html>
+<!-- The PV's terminal shots: you and your agent at work, drawn as pixel art on a 384×216
+     canvas shown at 5× (1920×1080). ?shot=<name>&lang=zh-CN|en picks the shot and its
+     language; time runs from the page's clock, so the director renderer can step it frame by
+     frame. ?crt=1 draws for the machine room's CRT screen: no Clawd, no window chrome.
+     A shot is a list of timed events (SHOTS below); everything on screen follows from them. -->
+<meta charset="utf-8">
+<title>moyu PV terminal</title>
+<style>
+  @font-face { font-family: 'FusionPixel'; src: url('../web/play/fonts/fusion-pixel-12px-zh_hans.woff2') format('woff2'); }
+  html, body { margin: 0; height: 100%; background: #050403; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; object-fit: contain; image-rendering: pixelated; }
+</style>
+<canvas id="c" width="384" height="216"></canvas>
+<script type="module">
+const q = new URLSearchParams(location.search);
+const lang = q.get('lang') === 'en' ? 'en' : 'zh-CN';
+const crt = q.get('crt') === '1';
+const shotName = q.get('shot') ?? 'morning';
+const L = (zh, en) => (lang === 'en' ? en : zh);
+
+const W = 384, H = 216;
+const C = {
+  bg: '#0e0c0b', bar: '#1c1714', ink: '#f3e6cf', dim: '#8a7a66', mint: '#7dffc8', amber: '#f2c27a',
+  red: '#ff6b5e', add: '#7dffc8', del: '#ff8a7a', skin: '#d77757', skinDark: '#b35f43', eye: '#0a0a10',
+  bubble: '#f3e6cf', bubbleInk: '#1a120c',
+};
+
+// ---- the shots: timed events, in seconds ----
+// type: a line you type (char by char); out: a line the agent prints; tool: an agent tool
+// line (● name  detail); progress: a bar that fills from a to b between t and t + dur;
+// clawd: the little Clawd's moves; say: its bubble; done: the bar's ✓ line
+const SHOTS = {
+  morning: {
+    title: '~/my-app — claude',
+    ev: [
+      { t: 0.3, type: L('把登录模块重构一下，然后跑测试', 'refactor the login module, then run the tests'), cps: 22 },
+      { t: 1.9, out: L('好的。', 'On it.') },
+      { t: 2.15, tool: [L('读取', 'Read'), L('3 个文件', '3 files')] },
+      { t: 2.4, tool: [L('编辑', 'Edit'), 'src/auth/session.ts', '+42', '−18'] },
+      { t: 2.65, tool: [L('编辑', 'Edit'), 'src/auth/login.ts', '+17', '−31'] },
+      { t: 2.9, tool: [L('运行', 'Run'), 'npm test'] },
+      { t: 3.1, progress: { from: 0, to: 0.26, dur: 4.4, total: 1204, eta: L('约 3 分钟', '~3 min') } },
+      { t: 3.3, clawd: 'peek' },
+      { t: 3.9, clawd: 'tap', look: 'bar' },
+      { t: 4.7, clawd: 'still', look: 'you' },
+      { t: 4.8, say: L('要跑三分钟……来一局？', 'Tests take three minutes… wanna play?'), dur: 1.9 },
+      { t: 5.9, type: L('来', 'sure'), cps: 8 },
+      { t: 6.35, tool: ['moyu', L('new --human 你', 'new --human you')] },
+      { t: 6.6, link: [L('来这里坐下', 'Take a seat'), 'http://127.0.0.1:7330/t/8f2a1c'] },
+      { t: 6.6, clawd: 'hop', look: 'you' },
+    ],
+    len: 7.6,
+  },
+  // on the machine room's CRT through the roulette game: the tests run on and pass.
+  // ?dur= sets how long they take, to land the ✓ where the game script wants it
+  crt: {
+    ev: [
+      { t: 0, tool: [L('运行', 'Run'), 'npm test'] },
+      { t: 0, progress: { from: 0.26, to: 1, dur: Number(q.get('dur') ?? 20), total: 1204, eta: L('约 3 分钟', '~3 min'), doneAt: true } },
+      { t: Number(q.get('dur') ?? 20) + 0.2, done: L('✓ 1204 个测试全部通过', '✓ 1204 passed') },
+    ],
+    len: Number(q.get('dur') ?? 20) + 3,
+  },
+  // dusk: tests passed, the next job is a build; Clawd comes up with two cards
+  dusk: {
+    title: '~/my-app — claude',
+    ev: [
+      { t: 0, done: L('✓ 1204 个测试全部通过', '✓ 1204 passed') },
+      { t: 0.25, type: L('部署到预发', 'deploy to staging'), cps: 18 },
+      { t: 1.0, tool: [L('运行', 'Run'), 'npm run build'] },
+      { t: 1.15, progress: { from: 0, to: 0.12, dur: 2.6, total: 100, unit: '%', eta: L('约 2 分钟', '~2 min') } },
+      { t: 1.2, clawd: 'peek', prop: 'cards' },
+      { t: 1.75, say: L('21 点？', 'Blackjack?'), dur: 1.6 },
+      { t: 2.75, type: L('好', 'deal'), cps: 8 },
+      { t: 3.1, clawd: 'hop', prop: 'cards' },
+    ],
+    len: 3.6,
+  },
+  // night: a long job; Clawd yawns and asks for dice
+  night: {
+    title: '~/my-app — claude',
+    ev: [
+      { t: 0, done: L('✓ 已部署到预发', '✓ deployed to staging') },
+      { t: 0.25, type: L('支付模块也重构了吧', 'now refactor the payments module'), cps: 20 },
+      { t: 1.35, out: L('这个要久一点，大概 10 分钟。', 'This one takes a while, about 10 minutes.') },
+      { t: 1.6, clawd: 'peek' },
+      { t: 2.1, clawd: 'yawn' },
+      { t: 2.9, clawd: 'still', look: 'you' },
+      { t: 2.95, say: L('摇骰子吧～', 'Dice?'), dur: 1.4 },
+      { t: 3.75, type: L('走', 'go'), cps: 8 },
+      { t: 4.05, clawd: 'hop' },
+    ],
+    len: 4.5,
+  },
+};
+
+// the end: Claude Code and DSH side by side, both asking; then the title card (drawEnd)
+SHOTS.end = { len: 8.4 };
+
+const shot = SHOTS[shotName];
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const tx = new OffscreenCanvas(W, H); // text layer, hardened to whole pixels each frame
+const tctx = tx.getContext('2d');
+
+// ---- the little Clawd: 24×15 body cells, four legs, two nub arms ----
+const EYES = {
+  open: ['XX', 'XX', 'XX', 'XX'],
+  blink: ['XX'],
+  happy: ['.XX.', 'X..X'],
+  shut: ['XXX', 'X.X'],
+};
+function drawClawd(g, x, y, { eyes = 'open', lx = 0, tap = 0, arm = 0, prop = null, yawn = 0, wiggle = 0 } = {}) {
+  const S = 2; // screen pixels a body cell
+  const px = (cx, cy, w, h, col) => ((g.fillStyle = col), g.fillRect(Math.round(x + cx * S), Math.round(y + cy * S), w * S, h * S));
+  px(0, 0, 24, 15, C.skin);
+  px(0, 14, 24, 1, C.skinDark);
+  // arms: nubs at the sides, one raised when arm > 0
+  px(-2, 7 - arm * 3, 2, 3, C.skin);
+  px(24, 7, 2, 3, C.skin);
+  // legs; tap lifts the front one
+  for (const [i, lx0] of [3, 8, 14, 19].entries()) px(lx0, 15 - (i === 0 ? tap : 0), 2, 4, C.skinDark);
+  const bm = EYES[eyes];
+  for (const [ex, ey] of [[7, 5], [16, 5]]) {
+    const w = bm[0].length, h = bm.length;
+    bm.forEach((row, r) => [...row].forEach((ch, c) => ch === 'X' && px(ex - Math.floor(w / 2) + c + lx, ey - Math.floor(h / 2) + r, 1, 1, C.eye)));
+  }
+  // a yawn: the mouth opens wide and dark
+  if (yawn > 0) px(12 - Math.round(3 * yawn), 9, Math.round(6 * yawn) || 1, Math.max(1, Math.round(4 * yawn)), '#5a0a14');
+  // the right arm raised, holding a prop up beside its head: two cards (an ace and a
+  // ten-card, fanned) or the fish it caught
+  if (prop === 'cards') {
+    px(24, 4, 2, 3, C.skin);
+    px(26, 1, 2, 4, C.skin);
+  }
+  if (prop === 'fish') {
+    px(-2, 1, 2, 6, C.skin);
+    px(24, 1, 2, 6, C.skin);
+  }
+  if (prop === 'cards') {
+    px(25, -10, 7, 10, '#1a120c');
+    px(26, -9, 5, 8, '#f3e6cf');
+    px(27, -8, 1, 1, '#d8432a');
+    px(29, -12, 7, 10, '#1a120c');
+    px(30, -11, 5, 8, '#f3e6cf');
+    px(31, -10, 1, 1, '#1a120c');
+    px(33, -6, 1, 3, '#1a120c');
+  }
+  if (prop === 'fish') {
+    // the fish it caught, held up over its head, tail flapping
+    const f = [
+      '.......kkk....',
+      'k....kkbbbkk..',
+      'kk..kbbbbbbbk.',
+      'kbkkbbbbbbwkbk',
+      'kbbbbbbbbbbbbk',
+      'kbkkbbbbbbbbk.',
+      'kk..kbbbbbbk..',
+      'k....kkkkkk...',
+    ];
+    const pal = { k: '#1a120c', b: '#7ab8ff', w: '#f3e6cf' };
+    f.forEach((row, r) => [...row].forEach((ch, c) => ch !== '.' && px(5 + c, -10 + r + (c < 3 ? wiggle : 0), 1, 1, pal[ch])));
+  }
+
+}
+
+// a speech bubble with its tail down to the right, the text wrapped to maxW
+function bubble(g, text, right, bottom, k) {
+  g.font = '12px FusionPixel';
+  const maxW = 150;
+  const lines = [];
+  let line = '';
+  for (const ch of text) {
+    if (g.measureText(line + ch).width > maxW && line) (lines.push(line), (line = ''));
+    line += ch;
+  }
+  lines.push(line);
+  const w = Math.ceil(Math.max(...lines.map((l) => g.measureText(l).width))) + 12;
+  const h = lines.length * 14 + 8;
+  const s = Math.min(1, k * 4); // pop in
+  const bx = Math.round(right - w * s), by = Math.round(bottom - h * s);
+  g.fillStyle = '#000';
+  g.fillRect(bx + 2, by + 2, Math.round(w * s), Math.round(h * s));
+  g.fillStyle = C.bubble;
+  g.fillRect(bx, by, Math.round(w * s), Math.round(h * s));
+  g.fillRect(right - 14, bottom, 4, 2);
+  g.fillRect(right - 12, bottom + 2, 2, 2);
+  if (s < 1) return;
+  crisp(g, (t) => {
+    t.fillStyle = C.bubbleInk;
+    lines.forEach((l, i) => t.fillText(l, bx + 6, by + 15 + i * 14));
+  });
+}
+
+// fillText on whole pixels only, for a context's text that will be hardened
+function snap(g) {
+  if (!g.snapped) {
+    const fill = g.fillText.bind(g);
+    g.fillText = (s, x, y) => fill(s, Math.round(x), Math.round(y));
+    g.snapped = true;
+  }
+  return g;
+}
+
+// text drawn on a scratch layer, every pixel then fully on or off (the pixel font's glyphs
+// land half a pixel off the grid and blur otherwise), and laid onto g
+const scratch = new OffscreenCanvas(W, H);
+function crisp(g, draw) {
+  const t = scratch.getContext('2d');
+  t.clearRect(0, 0, W, H);
+  t.font = '12px FusionPixel';
+  draw(snap(t));
+  const img = t.getImageData(0, 0, W, H);
+  for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 180 ? 255 : 0;
+  t.putImageData(img, 0, 0);
+  g.drawImage(scratch, 0, 0);
+}
+
+// ---- drawing a moment ----
+const ease = (k) => 1 - (1 - k) ** 3;
+const clamp = (v) => Math.max(0, Math.min(1, v));
+function frame(t) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  if (shotName === 'end') return drawEnd(t);
+  tctx.clearRect(0, 0, W, H);
+  const g = snap(tctx);
+  g.font = '12px FusionPixel';
+  g.textBaseline = 'alphabetic';
+  let top = 8;
+  if (!crt) {
+    ctx.fillStyle = C.bar;
+    ctx.fillRect(0, 0, W, 16);
+    for (const [i, col] of ['#ff6b5e', '#f2c27a', '#7dffc8'].entries()) ((ctx.fillStyle = col), ctx.fillRect(8 + i * 10, 6, 5, 5));
+    g.fillStyle = C.dim;
+    g.fillText(shot.title, W / 2 - g.measureText(shot.title).width / 2, 12);
+    top = 30;
+  }
+  let y = top;
+  const LH = 15;
+  let cursorAt = null;
+  // the latest thing on screen, and what comes next (Clawd's moves and lines aren't text)
+  const text = shot.ev.filter((e) => !e.clawd && !e.say);
+  const last = text.filter((e) => t >= e.t).at(-1) ?? null;
+  const next = text.find((e) => t < e.t);
+  let barY = null;
+  for (const e of shot.ev) {
+    if (t < e.t) continue;
+    if (e.type) {
+      const n = Math.min(e.type.length, Math.floor((t - e.t) * e.cps));
+      g.fillStyle = C.mint;
+      g.fillText('>', 8, y);
+      g.fillStyle = C.ink;
+      const s = e.type.slice(0, n);
+      g.fillText(s, 8 + g.measureText('> ').width, y);
+      if (e === last) cursorAt = { x: 8 + g.measureText('> ' + s).width + 1, y };
+      y += LH + 4;
+    } else if (e.out) {
+      g.fillStyle = C.ink;
+      g.fillText(e.out, 8, y);
+      y += LH;
+    } else if (e.tool) {
+      const [name, a, add, del] = e.tool;
+      g.fillStyle = C.mint;
+      g.fillText('●', 8, y);
+      g.fillStyle = C.ink;
+      const nx = 8 + Math.ceil(g.measureText('● ').width);
+      g.fillText(name, nx, y);
+      let x = nx + g.measureText(name + ' ').width;
+      g.fillStyle = C.dim;
+      g.fillText(a, x, y);
+      x += g.measureText(a + '  ').width;
+      if (add) ((g.fillStyle = C.add), g.fillText(add, x, y), (x += g.measureText(add + ' ').width));
+      if (del) ((g.fillStyle = C.del), g.fillText(del, x, y));
+      y += LH;
+    } else if (e.progress) {
+      const p = e.progress;
+      const k = p.from + (p.to - p.from) * clamp((t - e.t) / p.dur);
+      barY = y;
+      const bw = 150;
+      ctx.fillStyle = '#2a231d';
+      ctx.fillRect(20, y - 8, bw, 8);
+      ctx.fillStyle = C.mint;
+      ctx.fillRect(20, y - 8, Math.round(bw * k), 8);
+      g.fillStyle = C.dim;
+      g.fillText(p.unit === '%' ? `${Math.round(100 * k)}% · ${p.eta}` : `${Math.round(p.total * k)}/${p.total} · ${p.eta}`, 28 + bw, y);
+      y += LH + 4;
+    } else if (e.done) {
+      g.fillStyle = C.mint;
+      g.fillText(e.done, 8, y);
+      y += LH + 4;
+    } else if (e.link) {
+      g.fillStyle = C.amber;
+      g.fillText(e.link[0] + ' →', 20, y);
+      g.fillStyle = C.mint;
+      g.fillText(e.link[1], 20 + g.measureText(e.link[0] + ' → ').width, y);
+      ctx.fillStyle = C.mint;
+      ctx.fillRect(20 + g.measureText(e.link[0] + ' → ').width, y + 2, g.measureText(e.link[1]).width, 1);
+      y += LH;
+    }
+  }
+  // waiting on you: a fresh prompt when the next thing is your typing
+  if (last === null || (!last.type && next?.type)) {
+    g.fillStyle = C.mint;
+    g.fillText('>', 8, y);
+    cursorAt = { x: 8 + g.measureText('> ').width, y };
+  }
+  // the cursor blinks twice a second
+  if (cursorAt && Math.floor(t * 2) % 2 === 0) ((ctx.fillStyle = C.ink), ctx.fillRect(Math.round(cursorAt.x), cursorAt.y - 10, 6, 12));
+  // harden the text: every pixel fully on or off, like the game's pixel type
+  const img = tctx.getImageData(0, 0, W, H);
+  const d = img.data;
+  for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 180 ? 255 : 0;
+  tctx.putImageData(img, 0, 0);
+  ctx.drawImage(tx, 0, 0);
+
+  if (crt) return;
+  // ---- the little Clawd, bottom right ----
+  const moves = shot.ev.filter((e) => e.clawd && t >= e.t);
+  if (!moves.length) return;
+  const m = moves.at(-1);
+  const since = t - moves[0].t;
+  const prop = m.prop ?? null;
+  const cx = W - 70 - (prop ? 22 : 0); // room on the right for what it holds up
+  let cy = H + 2 - 40 * ease(clamp(since / 0.45));
+  let tap = 0, eyes = 'open', arm = 0, yawn = 0;
+  const look = [...moves].reverse().find((e) => e.look)?.look;
+  const lx = look === 'bar' ? -1 : 0;
+  if (m.clawd === 'tap') tap = Math.floor((t - m.t) * 5) % 2;
+  if (m.clawd === 'hop') {
+    const k = (t - m.t) % 0.5;
+    cy -= Math.round(Math.sin((k / 0.5) * Math.PI) * 4);
+    eyes = 'happy';
+    arm = 1;
+  }
+  if (m.clawd === 'yawn') {
+    const k = clamp((t - m.t) / 0.8);
+    yawn = Math.sin(k * Math.PI);
+    eyes = yawn > 0.2 ? 'shut' : 'open';
+    cy -= Math.round(yawn * 2);
+    arm = yawn > 0.3 ? 1 : 0;
+  }
+  if (Math.floor(t * 10) % 37 === 0 && m.clawd !== 'hop' && m.clawd !== 'yawn') eyes = 'blink';
+  drawClawd(ctx, cx, cy, { eyes, lx, tap, arm, prop, yawn });
+  const said = [...shot.ev].reverse().find((e) => e.say && t >= e.t && t < e.t + e.dur);
+  if (said) bubble(ctx, said.say, cx + 20, cy - 6, t - said.t);
+}
+
+// pixel text scaled up whole: drawn at the font's own 12px, hardened, then blown up k×
+const big = new OffscreenCanvas(W, 16);
+function bigText(text, x, y, k, col, align = 'center') {
+  const b = big.getContext('2d');
+  b.clearRect(0, 0, W, 16);
+  b.font = '12px FusionPixel';
+  b.fillStyle = col;
+  b.fillText(text, 0, 12);
+  const img = b.getImageData(0, 0, W, 16);
+  for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 180 ? 255 : 0;
+  b.putImageData(img, 0, 0);
+  const w = Math.ceil(b.measureText(text).width);
+  const left = align === 'center' ? Math.round(x - (w * k) / 2) : x;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(big, 0, 0, w, 16, left, Math.round(y), w * k, 16 * k);
+}
+
+function drawEnd(t) {
+  // -- two terminals, the same ask in both --
+  const out = clamp((t - 3.0) / 0.7); // they sink away
+  const drop = Math.round(140 * ease(out));
+  if (out < 1) {
+    ctx.globalAlpha = 1 - out;
+    const task = L('跑一下全量测试', 'run the full test suite');
+    for (const [i, name] of ['Claude Code', 'DSH'].entries()) {
+      const x0 = 12 + i * 184, y0 = 34 + drop, w = 176, h = 110;
+      ctx.fillStyle = '#16120f';
+      ctx.fillRect(x0, y0, w, h);
+      ctx.fillStyle = C.bar;
+      ctx.fillRect(x0, y0, w, 14);
+      crisp(ctx, (g) => {
+        g.fillStyle = C.dim;
+        g.fillText(name, x0 + w / 2 - g.measureText(name).width / 2, y0 + 11);
+        const n = Math.min(task.length, Math.max(0, Math.floor((t - 0.3) * 18)));
+        g.fillStyle = C.mint;
+        g.fillText('>', x0 + 6, y0 + 30);
+        g.fillStyle = C.ink;
+        g.fillText(task.slice(0, n), x0 + 18, y0 + 30);
+        if (t > 1.4) g.fillText(L('要跑一会儿。', 'This will take a bit.'), x0 + 6, y0 + 50);
+        if (t > 2.0) ((g.fillStyle = C.amber), g.fillText(L('来一局？', 'Wanna play a round?'), x0 + 6, y0 + 68));
+      });
+    }
+    ctx.globalAlpha = 1;
+  }
+  // -- the title card --
+  if (t > 3.3) {
+    const k = ease(clamp((t - 3.3) / 0.35));
+    ctx.globalAlpha = k;
+    bigText('moyu', W / 2, 8 - (1 - k) * 8, 5, C.ink);
+    bigText(L('摸鱼', '摸鱼 · slack off'), W / 2, 72, 2, C.mint);
+    ctx.globalAlpha = 1;
+  }
+  crisp(ctx, (g) => {
+    const tag = L('等 agent 干活的时候，一起摸会儿鱼', 'Play a round with your agent while it works');
+    const n = Math.max(0, Math.floor((t - 4.0) * 24));
+    g.fillStyle = C.ink;
+    if (n) g.fillText(tag.slice(0, n), W / 2 - g.measureText(tag).width / 2, 114);
+    if (t > 4.9) {
+      const s = L('目前支持  Claude Code · DSH', 'Works with  Claude Code · DSH');
+      g.fillStyle = C.amber;
+      g.fillText(s, W / 2 - g.measureText(s).width / 2, 134);
+    }
+    if (t > 5.4) {
+      const s = L('开源 · MIT   github.com/cucarol/moyu', 'Open source · MIT   github.com/cucarol/moyu');
+      g.fillStyle = C.dim;
+      g.fillText(s, W / 2 - g.measureText(s).width / 2, 150);
+    }
+  });
+  // -- Clawd walks in at the bottom right and pulls up a fish: 摸鱼 --
+  if (t > 5.6) {
+    const walk = clamp((t - 5.6) / 0.9);
+    const cx = Math.round(W + 10 - (W / 2 + 34) * ease(walk));
+    let cy = H - 38;
+    const caught = t > 6.8;
+    const step = !caught && walk < 1 ? Math.floor(t * 8) % 2 : 0;
+    if (caught) cy -= Math.round(Math.abs(Math.sin((t - 6.8) * 6)) * 3);
+    drawClawd(ctx, cx, cy, { eyes: caught ? 'happy' : 'open', tap: step, prop: caught ? 'fish' : null, wiggle: caught ? (Math.floor(t * 6) % 2 ? 1 : -1) : 0 });
+  }
+}
+
+let t0 = null;
+function loop(now) {
+  if (t0 === null) t0 = now;
+  const t = q.has('t') ? Number(q.get('t')) : (now - t0) / 1000;
+  frame(t);
+  requestAnimationFrame(loop);
+}
+document.fonts.load('12px FusionPixel').then(() => requestAnimationFrame(loop));
+</script>

@@ -1,0 +1,200 @@
+{
+ "contrabass": {
+  "title": "VSCO-2 CE solo contrabass, pizzicato",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VSCO-2-CE/tree/master/Strings/Solo%20Contrabass/Pizz",
+  "base": "https://raw.githubusercontent.com/sgossner/VSCO-2-CE/440300901dfe9275fd84e0b7763af1f8443ae62e/",
+  "dir": "Strings/Solo Contrabass/Pizz",
+  "files": {
+   "BKCtbss_Pizz_A#0_v1_rr1.wav": "c172382a1c8db63d1893e909da3c0f7f96a60371dce0cfe712e64fd622066fbe",
+   "BKCtbss_Pizz_A#0_v1_rr2.wav": "a82a509344a7e03e81f937b0daf647d55c3d47ec01867deeb41463d1d39209af",
+   "BKCtbss_Pizz_A#0_v3_rr1.wav": "ffdcf783332627d78bb09c348ce5bbf64e833d529a1cfd48e05362f27a857c0a",
+   "BKCtbss_Pizz_A#0_v3_rr2.wav": "47ca23f0950ab1ad7c07fd3d4743d826985cc3b79f997c372ead51ebd538a60b",
+   "BKCtbss_Pizz_A1_v1_rr1.wav": "c88e632ac4f716d4e85112d6ea5bbe2d27d67019296787c25d27178a9e5f18ac",
+   "BKCtbss_Pizz_A1_v1_rr2.wav": "e7aaefac5eb3986fcec86040e1f7310e84ea38be5d13abe2b3de101c41f43b2b",
+   "BKCtbss_Pizz_B2_v1_rr1.wav": "58d70398829e87b9bd3b43fb3d384d9bc3e0aa9bfe70175ec2f4e7a914226c8b",
+   "BKCtbss_Pizz_B2_v1_rr2.wav": "22722d1cc3d2a997ec12b37b5dda0221c8d5477669dfa5ff9f77fdde6fd2ba1d",
+   "BKCtbss_Pizz_C#2_v1_rr1.wav": "41804fc70cf82bd1c475611e315b14b1adf5effbd3369028302a681b54064b3f",
+   "BKCtbss_Pizz_C#2_v1_rr2.wav": "326fa0536c5487af2a500423e6b6d1c2acfe005cb40268c7c2f152b6ca71517c",
+   "BKCtbss_Pizz_C1_v1_rr1.wav": "5591160a867b21ba193d601390c9e1f35ec8d5deb0de686a410d25a98a103b06",
+   "BKCtbss_Pizz_C1_v1_rr2.wav": "d880b29cafc4b537a5097c9b65a7e20d1be15d60efaf7ceb15e20517b6ad455b",
+   "BKCtbss_Pizz_C1_v3_rr1.wav": "706d82ca773408bb6cd6f22466d5d017c1d36a9055f3a6b6af864407b26c5a0d",
+   "BKCtbss_Pizz_C1_v3_rr2.wav": "242a0638d0571084b3a40da3a21a3f2dd67585e31601babf85f4251b4f67a3d3",
+   "BKCtbss_Pizz_D1_v1_rr1.wav": "c4db29ae6949cb6c0d24201bb444c1d5b3806505bae47785cb199f5f0f4f02d2",
+   "BKCtbss_Pizz_D1_v1_rr2.wav": "4f17f7c828a9d9123c8c6498a27aa6b7a2772a5b937183f3d622f41f56ce21ce",
+   "BKCtbss_Pizz_E0_v1_rr1.wav": "7901d4aa056d2a6057a264ce98fc9e66a7ce48575d077a30f14083aa798cd188",
+   "BKCtbss_Pizz_E0_v1_rr2.wav": "5287fecaedbfce87737d53c77bc19aa78322ef498f143ca2b71bc1ee8dc17845",
+   "BKCtbss_Pizz_E0_v3_rr1.wav": "790d1a480a0f38216d30ad6e9152bd26a744d9d651a7e822e1fe58883a9c673f",
+   "BKCtbss_Pizz_E0_v3_rr2.wav": "f533b634b7f87d75234737b4acbf7bf6f9587f71ee93c12b0bda65bea3e40333",
+   "BKCtbss_Pizz_E1_v1_rr1.wav": "818fd3e7cc5200774333fc5dbb37e021ed0f155918cafe129acc0e90d37f9d49",
+   "BKCtbss_Pizz_E1_v1_rr2.wav": "9b87c1440edb95a70ca997ac83cff0d0e84c176f6269a59f86ce381f339f09ce",
+   "BKCtbss_Pizz_E1_v3_rr1.wav": "7628daebe4a9f8524d46e6d58eee811f437e73c77eb6c21396152af58a062506",
+   "BKCtbss_Pizz_E1_v3_rr2.wav": "496f50ac55ae948b2a155fd06a9bc430118b9725eb638c1673ae3c389203ae91",
+   "BKCtbss_Pizz_E2_v1_rr1.wav": "b5c3dd4943ea9a3f1aa23ed07c827ec8851e28a7254bab7811b706c09fceb231",
+   "BKCtbss_Pizz_E2_v1_rr2.wav": "24278fedd0c37885bc109bfa4620b32f447cd031d328f393cdc58898ff42cc37",
+   "BKCtbss_Pizz_F#0_v1_rr1.wav": "8d1337d6ba2b8e65e52d0623df7afa66b4b8d1863116cc6f798f629b7e27634b",
+   "BKCtbss_Pizz_F#0_v1_rr2.wav": "4709783a0fbbbf7290cb19e7fb39686f9deecbefec1f736da912b60f7b01ca96",
+   "BKCtbss_Pizz_F#0_v3_rr1.wav": "4bfdab1976e121136ab5d0bfb1e4b79523d5b0c7adf0d35704c98f5cb26713d1",
+   "BKCtbss_Pizz_F#0_v3_rr2.wav": "e50e59367b9b6707dbb28f97834e1d9bceabc233c5c86d3a61e8af2f5dedaaf4",
+   "BKCtbss_Pizz_F#1_v1_rr1.wav": "6f91a2747ce3cea061c670f7bf5dc8611eef1c3af8d6e2dca75b6dac5a65bfc6",
+   "BKCtbss_Pizz_F#1_v1_rr2.wav": "7aece8942bd894dd7f6ed899f11a6c6a5d15ab5266a4a32f68e32babc99c3a08",
+   "BKCtbss_Pizz_G#1_v1_rr1.wav": "bf377a41759c17794901957edc89ff48fb405f98879549916d9b228492f7f8d1",
+   "BKCtbss_Pizz_G#1_v1_rr2.wav": "25ff38b5300151dd040fd4934e67dc668d3d63a66c4733d9971428116d1b08bc",
+   "BKCtbss_Pizz_G#2_v1_rr1.wav": "f5d495c2184e6dacec7783719fbe3f6c1254995abb95ccf307026ef3dd7d5439",
+   "BKCtbss_Pizz_G#2_v1_rr2.wav": "a3a5250bc7f561670cd429b0c72ae3b3f3de575d887c69cee48cc7f587be206e",
+   "BKCtbss_Pizz_G0_v1_rr1.wav": "6c8ed06c816b2aee6443a3df4d8c24dd05d1e6fa72595d47b0e3755cd251e60f",
+   "BKCtbss_Pizz_G0_v1_rr2.wav": "805a41b3a153a8601c9308a106c33604030ff7f3c0c944a92b25663a1baa7873",
+   "BKCtbss_Pizz_G0_v3_rr1.wav": "9dc3c010e20999e524a7694abf27c12fb55296f2d9946d70917fa82b1d076136",
+   "BKCtbss_Pizz_G0_v3_rr2.wav": "7f64d7d6f6309ab622cc0e070c6d50274f73d3f483e4067a05647fb89a6f51c8"
+  }
+ },
+ "frame_drum": {
+  "title": "VCSL frame drums, large and small",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VCSL/tree/master/Membranophones/Struck%20Membranophones/Frame%20Drum",
+  "base": "https://raw.githubusercontent.com/sgossner/VCSL/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/",
+  "dir": "Membranophones/Struck Membranophones/Frame Drum",
+  "files": {
+   "HDrumL_Hand_rr1_Sum.wav": "b3dc4f4b2a0051d5ede32efe973fce7bb346220b223bd8e8078d61fdae586ab9",
+   "HDrumL_HitMuted_v2_rr1_Sum.wav": "fb08d2a29537fb6da0852ad8318709b8cbc312633237ca969e6e8f95ab5ca075",
+   "HDrumL_HitMuted_v2_rr2_Sum.wav": "f9ed09653a870811a2f2843e0fa7fa860293a206629d47414bb7ae7039d3bcef",
+   "HDrumL_HitMuted_v3_rr1_Sum.wav": "3ebcbac4dbb1ecf73af211f07f3adcbf0100f40150f4043caf574d760a7bb1d7",
+   "HDrumL_HitMuted_v3_rr2_Sum.wav": "61782ea5fe0d9cb9fe607a70b466a67db1a6a6a6e457eaa787cc376c131a01b3",
+   "HDrumL_Hit_v2_rr1_Sum.wav": "ebef530c488aa67df18dc2449eaa0311fa4ebec170a1182e35737fc84a70e7b6",
+   "HDrumL_Hit_v2_rr2_Sum.wav": "24155a8b4cbfb69f6d7b1bfef9b331b09c0695a033e8e8e1b518eb18fbdead55",
+   "HDrumL_Hit_v3_rr1_Sum.wav": "e0fa5a60d459df12fa2e79080fc2db514e58a70a47d3300c5363d6ad113dfd0c",
+   "HDrumL_Hit_v3_rr2_Sum.wav": "908e4e5bb6bc83dc1ae8dac86a869974eb6398578d131e278eb3d025cf736ca2",
+   "HDrumS_Hand_v1_rr1_Sum.wav": "5d8d963ee3487725097c82cb0f4f485ade3423e75541cedc32de2ed6ec6f61ce",
+   "HDrumS_HitMuted_v2_rr1_Sum.wav": "e13d6fb8f9bd089f134957c8532aafaa789fba8fbfe8bf829d224e0fa3c9d29e",
+   "HDrumS_HitMuted_v2_rr2_Sum.wav": "5955c77d2f7124be528030a71437c352e551ba232c6ddde6e4e78ad48129198e",
+   "HDrumS_HitMuted_v3_rr1_Sum.wav": "9ac5fae877b90f0f354766efe8dc813be87eeb31e6b52fe8750fa0528c2c16c4",
+   "HDrumS_HitMuted_v3_rr2_Sum.wav": "91f7adbfc782956ff39092724b97188c4c5561be9e703f015d76e9c57bec6161",
+   "HDrumS_Hit_v2_rr1_Sum.wav": "ee6c1a45edae6466ae806084a8f7502f8e47bc6b8540baafe55716049a70a67f",
+   "HDrumS_Hit_v2_rr2_Sum.wav": "fa0a802cbed2646b569a9f05a3cb7f6dd96a3a439ad90970a4fd5dff1afea695",
+   "HDrumS_Hit_v3_rr1_Sum.wav": "09721cec12ab8d2336cddd60953a2505ea1c8c8324d0b4ed245b9c5ea4561c33",
+   "HDrumS_Hit_v3_rr2_Sum.wav": "fb7dc925c96079cd14c3b88374dad46b4b31648db6799ac8ec685a983b9e7182"
+  }
+ },
+ "shaker": {
+  "title": "VCSL small shaker",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Shaker%2C%20Small",
+  "base": "https://raw.githubusercontent.com/sgossner/VCSL/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/",
+  "dir": "Idiophones/Struck Idiophones/Shaker, Small",
+  "files": {
+   "Mid_ShakerDouble_Down_rr1.wav": "0df7c271e1dba4de7304f7df81886390dd9ae698bfdd6df570026af4f2223574",
+   "Mid_ShakerDouble_Down_rr2.wav": "1bf11b6a055ace8b6fbe2c158f7bea449c91e4d72f97b9464b4856184aaf186d",
+   "Mid_ShakerDouble_Up_rr1.wav": "69a10776db0b838bc6555be2dbdb41e1521bb28bba2e89963d1bf779bfb5b61f",
+   "Mid_ShakerDouble_Up_rr2.wav": "661f7591bf5fc77d8b69c61bd52425af20d0f5692bdd2f68c74a684c5f02d26d",
+   "Mid_ShakerHighFaster_Down_rr1.wav": "cf4cb388ffcff5a042149e0645123b089ae85e8342876421e817dce55ce66a5a",
+   "Mid_ShakerHighFaster_Down_rr2.wav": "fa616e9ea22817bb75dfeb6a914440ea933696d43649d6c472f417617b741bd4",
+   "Mid_ShakerHighFaster_Up_rr1.wav": "45ae715ce4f64280c9d8fa7eacb4e7003127b93c59c08e95125b67b173cf98e0",
+   "Mid_ShakerHighFaster_Up_rr2.wav": "43511c3cf1522a3adf1f5533d443aa147e4a3e5272615e29485cb8efebc63dd2",
+   "Mid_ShakerLowFaster_Down_rr1.wav": "4f8c887b138696c2dc47003d6b35a2be29da33e548afc4e43e07a4a60723ef65",
+   "Mid_ShakerLowFaster_Down_rr2.wav": "c448de8d6f3bfe410d3ea3ef672a9065dbf40b4d042e0f73e9eecce1e64b7116",
+   "Mid_ShakerLowFaster_Up_rr1.wav": "411cc7d4b5c9731be16f4e9c91f3f292ee5c88b669e403609998b366b6393371",
+   "Mid_ShakerLowFaster_Up_rr2.wav": "800dde7afd5e2a11093865b1ef63947721efebc3878bf1ca74fcfb57e48bd857",
+   "Mid_Shaker_Roll_Fast_rr1.wav": "30e8d8d69e696237b20bf5ad676dba7e56500d89b13b36534e56252260b86eb7",
+   "Mid_Shaker_Roll_Fast_rr2.wav": "bce72f24f1dd63235aee93ee9391e476b3f06b664bb3f1356efc80c9c763c9d4",
+   "Mid_Shaker_Slap_rr1.wav": "793c21eb3afdcd68535b3b1df45a097625fc02f26fb7bc86f1dc5b1e5b28e8db",
+   "Mid_Shaker_Slap_rr2.wav": "a4ef756d0ac80985567f6187be3209a58955f3e10dd95f2fe2d61b49a750a13d"
+  }
+ },
+ "snare": {
+  "title": "VSCO 1 snare drum",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VSCO-2-CE/tree/master/VSCO%201%20Percussion/drums/snare/drum1",
+  "base": "https://raw.githubusercontent.com/sgossner/VSCO-2-CE/440300901dfe9275fd84e0b7763af1f8443ae62e/",
+  "dir": "VSCO 1 Percussion/drums/snare/drum1",
+  "files": {
+   "snare1_f_1.wav": "a2b30cc19bd5688ee6d11629b53d24192c5dcc2033f41332cea9a789bc87b744",
+   "snare1_f_2.wav": "38fb22f435dbd646962c49cc96dcd3044a4503aced3fcd223fccb1b458122062",
+   "snare1_f_3.wav": "3426f234d6dad5e406ee0667fcd316e3f2c55dd31a83f1026e20c6449c5282f7",
+   "snare1_ff_1.wav": "88fcda74e24679bed36b1dc4de1a34abd5e3fc3204bdf788e02d478a658ca314",
+   "snare1_ff_2.wav": "3426f234d6dad5e406ee0667fcd316e3f2c55dd31a83f1026e20c6449c5282f7",
+   "snare1_fff_1.wav": "4cf4cbea9986e38ace7e3385f1cf3b9d0f12a4824e7a84436660c6f054792a1e",
+   "snare1_fff_2.wav": "b4a5be62d6337affb97bf5ef896c681d2357c6b0cdb11818f9e46577440ebd24",
+   "snare1_mp_1.wav": "a8342d77693782430feb2ec0b88c02015bae4724202f39858ef4375368bfeff4",
+   "snare1_mp_2.wav": "28d0200bc3a2b97f507351f91d5d872139c98f7c1f45b9b43e1a1d98cc1ada53",
+   "snare1_p_1.wav": "01bf6b1e91ea487bf580f30c847b996e50b5bd0ef9eabd9379bacefb04fdd5f0"
+  }
+ },
+ "vinyl": {
+  "title": "vinyl crackle (mitchanary)",
+  "license": "CC0",
+  "page": "https://freesound.org/people/mitchanary/sounds/614342/",
+  "url": "https://cdn.freesound.org/previews/614/614342_1282624-hq.mp3",
+  "files": {
+   "614342.mp3": "9ff471477fc93bf4a40ba9609fa0e240be1925c18eb7ebf21b6354c2e65222ce"
+  }
+ },
+ "hat": {
+  "title": "closed hi-hat (pjcohen)",
+  "license": "CC0",
+  "page": "https://freesound.org/people/pjcohen/sounds/45664/",
+  "url": "https://cdn.freesound.org/previews/45/45664_394391-hq.mp3",
+  "files": {
+   "45664.mp3": "7af54b990c7b115834dbeb7e778c226530d652708c8b4de51f05899cec453990"
+  }
+ },
+ "snap": {
+  "title": "finger snap (dastudiospr)",
+  "license": "CC0",
+  "page": "https://freesound.org/people/dastudiospr/sounds/496088/",
+  "url": "https://cdn.freesound.org/previews/496/496088_10761583-hq.mp3",
+  "files": {
+   "496088.mp3": "b041a56c7b5c18dd72325dbf745c83408f3c1d617e25e8c96b7e9564c29bd7e8"
+  }
+ },
+ "bass_drum": {
+  "title": "VSCO 1 bass drum",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VSCO-2-CE/tree/master/VSCO%201%20Percussion/drums/bass",
+  "base": "https://raw.githubusercontent.com/sgossner/VSCO-2-CE/440300901dfe9275fd84e0b7763af1f8443ae62e/",
+  "dir": "VSCO 1 Percussion/drums/bass",
+  "files": {
+   "bdrum_ff_1.wav": "549c1190c3da0a8a8f252f427f7ed03e22efc2e1f62ae86b01f6c3d27eca9bf0",
+   "bdrum_fff_1.wav": "b4b563c46d784d5a136db30d0ecd7d70dbb977f3cd80ad0eb72414afbf481095",
+   "bdrum_roll1.wav": "784100104e1a7cf725638719a04fc1e3e356b10ed71cfdbf20fb5e2fe1c359a7"
+  }
+ },
+ "piano": {
+  "title": "VSCO-2 CE upright piano (Simon Dalzell, Ivy Audio)",
+  "license": "CC0",
+  "page": "https://github.com/sgossner/VSCO-2-CE/tree/master/Keys/Upright%20Piano",
+  "base": "https://raw.githubusercontent.com/sgossner/VSCO-2-CE/440300901dfe9275fd84e0b7763af1f8443ae62e/",
+  "dir": "Keys/Upright Piano",
+  "files": {
+   "Player_dyn1_rr1_006.wav": "485d6822e74b73f6bb38ff221fd7c4b55316c5653cf10d1edfcf471a32adf3dd",
+   "Player_dyn1_rr1_008.wav": "3b4cdd096b01b23a81b2ad8ad880c409c8a78d69cd0306fe9bf66795cd62acca",
+   "Player_dyn1_rr1_010.wav": "6bdbe8457f7b921ddfd2456aa5dd5932e60a687ca6fb255b3b80ffc6eecbd199",
+   "Player_dyn1_rr1_012.wav": "16be23a8378185f1b392600d3fa800a206945543866548640f7573534f76faf2",
+   "Player_dyn1_rr1_014.wav": "f3d00b63bb178680fdd4d9ed7ea43d1df1cf29e00b567ccb022c2bd411a20607",
+   "Player_dyn1_rr1_016.wav": "f1a3a542cf70a13aa865ce130d50d72cd735449e605d1c5a45dc06b5a60b27fd",
+   "Player_dyn1_rr1_018.wav": "01387cb5318c5abf11410ae8e2f4ef6aa83ec03254b4bccfe865aba262a2e412",
+   "Player_dyn1_rr1_020.wav": "08242e8d1c865c8cdc794cc7921d3d9663bedb5a12bfefe0de13aaa86fd23133",
+   "Player_dyn1_rr1_022.wav": "660e57ad8fd868ed9c56fe36e4862a6aff1cb65b7838a568d4c4f2f0865ad1ab",
+   "Player_dyn1_rr1_024.wav": "916c3ec2d61fb421e74fb4866ef75d3ef17e9d88e9dc858da24159846489d33f",
+   "Player_dyn1_rr1_026.wav": "254be5d34270e5eb78bbda3f7425c3e82b9596845db2c065b13179f23c23196b",
+   "Player_dyn1_rr1_028.wav": "a9fbd1af0703b294d3267f8f88fca4b4366e3b772f7d780acf2de1cbf2056355",
+   "Player_dyn1_rr1_030.wav": "d3d47e12108098d25a490fbac30cbbf29dfac801bbebd62b969cc1fe7a8342e5",
+   "Player_dyn1_rr1_032.wav": "2a903396ee7130c42a75aa10497c6ee018445e0934dde135e7f168f07d3b8a07",
+   "Player_dyn1_rr1_034.wav": "c9bdc616f2f289c16ebf40a33dd26c8cd55db92d6cfa6cda0792805ebfbf25dc",
+   "Player_dyn2_rr1_006.wav": "80ade36a6030d83d868b6abbd1e9ab6f85ec2494cfe25d2affffd88f453e81e0",
+   "Player_dyn2_rr1_008.wav": "52be11ac2a57389f2d12cbd82df9b175da7b60e423d8a1154e1d7fc3340ecd6e",
+   "Player_dyn2_rr1_010.wav": "324c53abf03b2b32ff74f52886806ab5d4a7a37f6eb9c746558799037d7e12da",
+   "Player_dyn2_rr1_012.wav": "9accd92b779985736589d7bf25b93f1d6d508830d2f2aad3e76a481549cc1ca2",
+   "Player_dyn2_rr1_014.wav": "0bdf66b89c2cd8042118b2cf9898aab334820fff7538b8553655a3d11d2ba107",
+   "Player_dyn2_rr1_016.wav": "87b90b8161b5ddac5f1e81cce7895c726aff220e735586059c7ed684a5ae82dc",
+   "Player_dyn2_rr1_018.wav": "fb39ae501f7dde4aa3626d2e382b3709962cbe5d48b6c001ba7c911d1ffb6aeb",
+   "Player_dyn2_rr1_020.wav": "dc314226819e7af0768cd7fc08933f5e5b550083145e05af630fd7556f4d3913",
+   "Player_dyn2_rr1_022.wav": "9a4e03fa389b7e59ea6b3a6719eef52be8d607844283c7163662030f57b60942",
+   "Player_dyn2_rr1_024.wav": "a00ae1a2b2a78c154b067a9709afc1ce2d3be9f08d9f4ad3c9c869a7db80eb75",
+   "Player_dyn2_rr1_026.wav": "4e668e75c3922c79ef06bd46806224dbf8dbfa0be1569847a1cd17e573a967ec",
+   "Player_dyn2_rr1_028.wav": "84fe87bd24dc93d354213f730517a29f485c40715d5959af97976b364110b70a",
+   "Player_dyn2_rr1_030.wav": "4b558995c108f7f1dcede12c7e0444caa2658205fea34a314abf485dc6b7e710",
+   "Player_dyn2_rr1_032.wav": "8a4b127b8420c276d8935495d13b4e493c3eaa8f8aaef75bbc4f74d6437160f2",
+   "Player_dyn2_rr1_034.wav": "c5305eb820902b66b0a55768733956ff21d98692810d6e2cec24d68879ef5fcd"
+  }
+ }
+}

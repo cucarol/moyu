@@ -1,0 +1,3 @@
+#!/bin/sh
+# The plugin puts this on the Bash tool's PATH.
+exec node "$(dirname "$0")/../cli/moyu.mjs" "$@"

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>摸鱼 · 音效板</title>
+  <style>
+    body { background: #040d0b; color: #cfe9dc; font: 15px/1.5 monospace; margin: 24px; }
+    h1 { color: #7dffc8; font-size: 18px; }
+    button { background: #0b1a16; color: #cfe9dc; border: 1px solid #1c3a32; padding: 6px 10px; margin: 3px; cursor: pointer; font: inherit; }
+    button:hover { border-color: #7dffc8; color: #7dffc8; }
+    section { margin: 14px 0; }
+    .k { color: #5f8478; display: inline-block; width: 6em; }
+    table { border-collapse: collapse; margin-top: 8px; }
+    td, th { padding: 2px 12px; text-align: right; border-bottom: 1px solid #12261f; }
+    td:first-child, th:first-child { text-align: left; }
+    .hot { color: #ff5a6a; }
+  </style>
+</head>
+<body>
+  <h1>摸鱼 · 音效板</h1>
+  <p>Every sound the table makes, synthesized in <code>../audio.js</code>. Click once anywhere to unlock audio.</p>
+  <section><span class="k">bed</span><button data-vibe="roulette">roulette</button><button data-vibe="yacht">raft (21, Yacht)</button><button id="radio">music from the radio: off</button>
+    <span class="k">tension</span><input id="tension" type="range" min="0" max="100" value="0"> <span id="tn">0</span></section>
+  <p>win / lose / over play the casino versions while the raft bed is on, and the raft's game sounds play a little softer.</p>
+  <section><span class="k">voice</span><select id="voice"></select><select id="mood"></select>
+    <input id="line" size="40" value="你好呀，这把我先来！Let's go?"><button id="speak">speak</button>
+    <span id="blips"></span></section>
+  <section id="pads"></section>
+  <section><button id="measure">measure levels (offline)</button><table id="levels"></table></section>
+  <script type="module">
+    import { SFX, VIBES, VIBE_SFX, VOICES, makeEnv, setVibe, sfx, setMood, meterLive, speak, babble, loadPinyin, setAmbience, setRadio } from '../audio.js';
+    window.setAmbience = setAmbience;
+    window.setRadio = setRadio;
+    let radio = false;
+    document.querySelector('#radio').onclick = (e) => {
+      setRadio((radio = !radio));
+      e.target.textContent = `music from the radio: ${radio ? 'on' : 'off'}`;
+    };
+    window.speak = speak;
+    window.meterLive = meterLive;
+    window.setVibe = setVibe;
+    window.setMood = setMood;
+    const OPTS = {
+      lay: { count: 6, gap: 0.09 }, load: { count: 6, gap: 0.11 }, deal: { slot: 1 },
+      'hit:you': { who: 'you' }, 'hit:opp': { who: 'opp' },
+      chips: { amount: 200000 }, 'bust:you': { who: 'you' }, 'bust:opp': { who: 'opp' },
+      'sweep:you': { toYou: true, pot: 400000 }, 'sweep:big': { toYou: true, pot: 1200000 }, 'sweep:opp': { toYou: false, pot: 400000 },
+      roll: { count: 5 }, rattle: { dur: 0.6 }, score: { points: 24 }, 'score:0': { points: 0 },
+    };
+    const SPLIT = { hit: ['hit:you', 'hit:opp'], bust: ['bust:you', 'bust:opp'], sweep: ['sweep:you', 'sweep:big', 'sweep:opp'], score: ['score', 'score:0'] };
+    const ITEMS = ['cot', 'mirage', 'compact', 'inject', 'temp', 'limit', 'cache', 'jailbreak'];
+    const list = Object.keys(SFX).flatMap((n) => SPLIT[n] ?? (n === 'use' ? ITEMS.map((i) => `use:${i}`) : [n]));
+    const call = (key) => {
+      const [name, arg] = key.split(':');
+      return [name, name === 'use' ? { item: arg } : OPTS[key] ?? OPTS[name]];
+    };
+    const pads = document.querySelector('#pads');
+    for (const key of list) {
+      const b = document.createElement('button');
+      b.textContent = key;
+      b.onclick = () => sfx(...call(key));
+      pads.append(b);
+    }
+    const vsel = document.querySelector('#voice');
+    for (const name of Object.keys(VOICES)) vsel.add(new Option(name, name));
+    const msel = document.querySelector('#mood');
+    for (const name of ['', 'happy', 'smug', 'flat', 'angry', 'wide', 'sad', 'squint', 'shut', 'sleep']) msel.add(new Option(name || '(no mood)', name));
+    document.querySelector('#speak').onclick = async () => {
+      const r = await speak(document.querySelector('#line').value, { voice: vsel.value, mood: msel.value || undefined });
+      document.querySelector('#blips').textContent = r ? `${r.blips.length} blips · ${r.ms} ms` : 'silent';
+    };
+    let vibe = null;
+    for (const b of document.querySelectorAll('[data-vibe]')) b.onclick = () => setVibe((vibe = b.dataset.vibe));
+    const tension = document.querySelector('#tension');
+    tension.oninput = () => {
+      const x = tension.value / 100;
+      document.querySelector('#tn').textContent = x;
+      // fake a view that drives the bed to about x
+      if (vibe === 'roulette') setMood({ phase: 'playing', seats: [{ hp: x > 0.5 ? 1 : x > 0.2 ? 2 : 4 }], left: x > 0.8 ? 1 : x > 0.6 ? 2 : 6, turn: 'x', you: 'y' });
+      else setMood({ game: 'blackjack', phase: 'playing', pot: Math.min(x, 0.5) * 1600000, facing: x > 0.6 ? 'x' : null, round: x > 0.85 ? 7 : 1, rounds: 8, seats: [{ stack: 1e6 }, { stack: 1e6 }], turn: 'x', you: 'y' });
+    };
+
+    // Render each sound alone into an offline context and report peak and RMS (dBFS) at
+    // the default volume, so levels can be balanced without hearing them.
+    async function render(fn, secs) {
+      const ctx = new OfflineAudioContext(2, 48000 * secs, 48000);
+      const master = ctx.createGain();
+      master.gain.value = 0.6 ** 2 * 1.5;
+      master.connect(ctx.destination);
+      const E = makeEnv(ctx, master);
+      fn(E, ctx);
+      const buf = await ctx.startRendering();
+      E.bed?.stop();
+      let peak = 0, sum = 0, n = 0;
+      for (let ch = 0; ch < 2; ch++) for (const s of buf.getChannelData(ch)) {
+        peak = Math.max(peak, Math.abs(s));
+        sum += s * s;
+        n++;
+      }
+      const db = (x) => (20 * Math.log10(x || 1e-9)).toFixed(1);
+      return { peak: db(peak), rms: db(Math.sqrt(sum / n)), nan: Number.isNaN(peak) };
+    }
+    window.measure = async () => {
+      const rows = [];
+      for (const key of list) {
+        const [name, opts] = call(key);
+        rows.push({ key, ...(await render((E) => SFX[name](E, 0.01, opts), 3)) });
+      }
+      await loadPinyin();
+      for (const name of Object.keys(VOICES)) rows.push({ key: `voice ${name}`, ...(await render((E) => babble(E, 0.01, '叽里咕噜说啥呢，你到底要干嘛？Hello world！', VOICES[name]), 4)) });
+      for (const name of ['win', 'lose', 'over']) rows.push({ key: `casino ${name}`, ...(await render((E) => VIBE_SFX.yacht[name](E, 0.01), 3)) });
+      rows.push({ key: 'roulette bed (10s)', ...(await render((E) => (E.bed = VIBES.roulette(E)), 10)) });
+      return rows;
+    };
+    document.querySelector('#measure').onclick = async () => {
+      const rows = await window.measure();
+      document.querySelector('#levels').innerHTML = '<tr><th>sound</th><th>peak dB</th><th>rms dB</th></tr>' +
+        rows.map((r) => `<tr><td>${r.key}</td><td class="${r.peak > -1 ? 'hot' : ''}">${r.peak}</td><td>${r.rms}</td></tr>`).join('');
+    };
+  </script>
+</body>
+</html>

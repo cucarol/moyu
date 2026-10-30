@@ -1,0 +1,9 @@
+[
+  { "id": "sfx-click", "sfx": "click", "secs": 0.6 },
+  { "id": "sfx-blank", "sfx": "blank", "secs": 1.2 },
+  { "id": "sfx-shot", "sfx": "shot", "secs": 2.0 },
+  { "id": "sfx-use", "sfx": "use", "args": { "item": "cache" }, "secs": 1.8 },
+  { "id": "sfx-card", "sfx": "card", "secs": 0.8 },
+  { "id": "sfx-roll", "sfx": "roll", "secs": 1.6 },
+  { "id": "sfx-win", "sfx": "win", "secs": 3.2 }
+]

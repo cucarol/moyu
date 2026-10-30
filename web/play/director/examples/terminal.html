@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- An example page for the director's tools (docs/director.md): a terminal typing a few
+     lines and filling a progress bar, a click for each key. It runs on whatever clock the
+     page has, so it renders frame by frame on its own (render.mjs --page) and on the
+     machine room's CRT (a script's crt: { html }). ?lang=en for English. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Pixel; src: url(/web/play/fonts/fusion-pixel-12px-zh_hans.woff2) format('woff2'); }
+  html, body { margin: 0; height: 100%; background: #031410; overflow: hidden; }
+  /* top padding past the 60 px a 4:3 screen loses top and bottom in a 16:9 push-in */
+  body { font: 24px/1.5 Pixel, monospace; color: #7dffc8; padding: 76px 34px 28px; box-sizing: border-box; text-shadow: 0 0 6px #2f9f7888; }
+  .dim { color: #3f9f7c; }
+  .bar { height: 22px; border: 2px solid #3f9f7c; margin-top: 14px; position: relative; }
+  .fill { position: absolute; inset: 2px auto 2px 2px; background: #7dffc8; width: 0; }
+  .cursor { display: inline-block; width: 12px; height: 24px; background: #c8ffe8; vertical-align: -4px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="out"></div><span class="cursor"></span>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<div class="dim" id="pct">0%</div>
+<script>
+  const en = new URLSearchParams(location.search).get('lang')?.startsWith('en') ?? false;
+  const LINES = en
+    ? ['$ moyu play --game roulette', 'sealing the shells... ok', 'waiting for a seat', '> Claude has joined the table']
+    : ['$ moyu play --game roulette', '封存弹仓…… 完成', '等待入座', '> Claude 已入座'];
+  const out = document.querySelector('#out');
+  const fill = document.querySelector('#fill');
+  const pct = document.querySelector('#pct');
+  // a key's click: a short burst of noise through a band-pass
+  let ac = null;
+  function click() {
+    ac ??= new AudioContext();
+    const n = ac.createBuffer(1, 600, ac.sampleRate);
+    const d = n.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 3;
+    const src = ac.createBufferSource();
+    src.buffer = n;
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2400 + Math.random() * 800;
+    const g = ac.createGain();
+    g.gain.value = 0.5;
+    src.connect(bp).connect(g).connect(ac.destination);
+    src.start();
+  }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  (async () => {
+    await wait(300);
+    for (const line of LINES) {
+      const el = document.createElement('div');
+      out.append(el);
+      for (const ch of line) {
+        el.textContent += ch;
+        if (ch !== ' ') click();
+        await wait(55 + Math.random() * 40);
+      }
+      await wait(260);
+    }
+  })();
+  // the bar fills over four seconds, drawn each frame
+  const t0 = performance.now();
+  requestAnimationFrame(function tick() {
+    const k = Math.min(1, (performance.now() - t0) / 4000);
+    fill.style.width = `calc(${k * 100}% - 4px)`;
+    pct.textContent = `${Math.round(k * 100)}%`;
+    if (k < 1) requestAnimationFrame(tick);
+  });
+</script>
+</body>
+</html>

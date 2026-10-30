@@ -1,0 +1,23 @@
+{
+  "name": "moyu-dsh",
+  "version": "0.1.0",
+  "private": true,
+  "description": "moyu (摸鱼) for DeepSeek Harness: play luck games with your DSH session mid-work; the plugin wakes it on its turns.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22",
+    "dsh": ">=0.2.0-rc.2 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

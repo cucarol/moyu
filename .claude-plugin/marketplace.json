@@ -1,0 +1,11 @@
+{
+  "name": "moyu-local",
+  "owner": { "name": "cucarol" },
+  "plugins": [
+    {
+      "name": "moyu",
+      "source": "./",
+      "description": "Luck games with your Claude Code session, with a listener that wakes it on its turns."
+    }
+  ]
+}

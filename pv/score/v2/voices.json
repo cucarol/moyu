@@ -1,0 +1,20 @@
+{
+  "pad": {"gain": 4.25, "ref": 0.022},
+  "keys": {"gain": 1.99, "ref": 0.045},
+  "swell": {"gain": 17.36, "ref": 0.08},
+  "drone": {"gain": 0.34, "ref": 1},
+  "ping": {"gain": -0.92, "ref": 0.022},
+  "glint": {"gain": -19.01, "ref": 1.2},
+  "bass": {"gain": 3.57, "ref": 0.18},
+  "kick": {"gain": 1.24, "ref": 1},
+  "hat": {"gain": -23.43, "ref": 1.2000000000000002},
+  "rim": {"gain": -11.32, "ref": 1.15},
+  "boom": {"gain": 7.76, "ref": 1},
+  "crash": {"gain": 4.73, "ref": 1},
+  "arp": {"gain": -4.67, "ref": 0.02},
+  "lead": {"gain": 2.57, "ref": 1},
+  "shimmer": {"gain": -12.41, "ref": 0.007},
+  "riser": {"gain": 2.66, "ref": 0.025},
+  "toss": {"gain": -4.76, "ref": 0.02},
+  "ding": {"gain": -10.71, "ref": 0.012}
+}

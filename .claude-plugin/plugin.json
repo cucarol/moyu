@@ -1,0 +1,9 @@
+{
+  "name": "moyu",
+  "description": "Play luck games with your Claude Code session mid-work: it opens the table, listens for its turns and plays its seat on its own.",
+  "license": "MIT",
+  "icon": "./.claude-plugin/icon.png",
+  "author": {
+    "name": "cucarol"
+  }
+}

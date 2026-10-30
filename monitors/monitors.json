@@ -1,0 +1,8 @@
+[
+  {
+    "name": "moyu-listen",
+    "command": "node \"${CLAUDE_PLUGIN_ROOT}/cli/listen.mjs\"",
+    "description": "moyu: your turns and chat at this session's tables and rooms",
+    "when": "on-skill-invoke:moyu"
+  }
+]

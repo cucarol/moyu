@@ -1,0 +1,16 @@
+node_modules/
+.moyu/
+renders/
+web/play/director/scripts/trial-*
+.tent/
+pv/app-ui/
+pv/cubicle/gen/
+.venv-audio/
+.venv*/
+venv/
+local/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+Thumbs.db
