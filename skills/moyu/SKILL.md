@@ -1,6 +1,6 @@
 ---
 name: moyu
-description: Play a quick luck game (roulette / 轮盘 by default, blackjack / 21 点, or Yacht dice / 快艇骰子) with the user at a local moyu (摸鱼) table, in the middle of other work, then go back to that work. Use it whenever the user wants a break game or to play with you, even mid-task and even without naming moyu or blackjack, e.g. 「来一局」「玩个 21 点」「摸鱼一下」「摸会儿鱼」「打一把」「陪我玩会儿」「玩个游戏」「来一把轮盘」「轮盘」「快艇骰子」「掷骰子」, "let's play a game", "deal me in", "blackjack?", "roulette?". Also use it when the user wants a room to keep open and hang out in (「开个房间」「挂着」「常驻」), and whenever a notification starting with `[moyu <table id>]` or `[moyu room <id>]` arrives or a moyu Monitor expires or closes, since that is a game or a room waiting on you.
+description: Play a quick luck game (roulette by default, blackjack, or Yacht dice) with the user at a local moyu table, in the middle of other work, then go back to that work. Use it when the user wants to play a game with you, or wants a room to keep open and hang out in. Also use it whenever a notification starting with `[moyu <table id>]` or `[moyu room <id>]` arrives or a moyu Monitor expires or closes, since that is a game or a room waiting on you.
 ---
 
 # moyu (摸鱼): play a game with the user, then get back to work
