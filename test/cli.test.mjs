@@ -98,7 +98,7 @@ test('--table routes between two open tables, and both survive a server restart'
 });
 
 test('a room: the human starts games from the page, the agent plays them with no moyu new', async () => {
-  const out = await moyu('room', '--human', 'C');
+  const out = await moyu('room');
   const link = new URL(out.match(/Human's link: (\S+)/)[1]);
   const room = { id: link.pathname.split('/').pop(), k: link.searchParams.get('k') };
   assert.match(out, new RegExp(`^Room ${room.id} open\\.`));
@@ -111,7 +111,7 @@ test('a room: the human starts games from the page, the agent plays them with no
   // Idle chat, both ways.
   assert.ok((await post(`/api/rooms/${room.id}/say`, { k: room.k, text: 'hey' })).ok);
   // Not listening, so its reply comes back with the line it missed.
-  assert.match(await moyu('say', 'hi C', '--room', room.id), /C says: hey/);
+  assert.match(await moyu('say', 'hi C', '--room', room.id), /Human says: hey/);
 
   // The human picks Yacht on the page; the agent's commands find the table by id.
   const started = await post(`/api/rooms/${room.id}/start`, { k: room.k, game: 'yacht' });
@@ -168,7 +168,7 @@ test("the plugin's listener follows this session's tables and room, and nobody e
     await until(/for A now/);
 
     // A room: the game the human starts there arrives once, through the room.
-    const room = await moyuIn(mine, 'room', '--new', '--human', 'C');
+    const room = await moyuIn(mine, 'room', '--new');
     assert.match(room, /^Listening:/m);
     const r = humanOf(room);
     const started = await post(`/api/rooms/${r.id}/start`, { k: r.k, game: 'blackjack' });
@@ -283,6 +283,17 @@ test('a short roulette game opens from moyu new, moyu start and the API, and ver
   assert.doesNotMatch(started, /Round/);
   assert.match(started, /4\/4/);
   assert.doesNotMatch(await moyu('view'), /Round/);
+});
+
+test('moyu next waits for the next frame, and comes back empty when nothing came', async () => {
+  const out = await moyu('new', '--game', 'blackjack');
+  const h = humanOf(out);
+  assert.match(await moyu('next', '--table', h.id, '--wait', '1'), new RegExp(`^\\[moyu ${h.id}\\] Nothing new yet\\. Wait again: moyu next --table ${h.id}$`));
+  const waiting = moyu('next', '--table', h.id);
+  await new Promise((r) => setTimeout(r, 500));
+  assert.ok((await post(`/api/tables/${h.id}/say`, { k: h.k, text: 'yo' })).ok);
+  assert.match(await waiting, /Human says: yo/);
+  assert.equal((await fetch(`${BASE}/api/tables/${h.id}/next?k=${h.k}`)).status, 404); // the human's seat has no next
 });
 
 // Last: the rename it makes is remembered for every table after it.

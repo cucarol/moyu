@@ -148,22 +148,25 @@ test('a scripted 21 game tells exactly the game the server would', () => {
     for (const e of g.log) seen.add(e.type === 'game_over' ? e.reason : e.type === 'settle' ? e.how : e.type);
   }
   // every act, a fold and a showdown, and a game ended by the hands and by a stack gone
-  assert.deepEqual([...seen].sort(), ['broke', 'call', 'double', 'fold', 'hand_start', 'hands', 'hit', 'showdown', 'stand']);
+  assert.deepEqual([...seen].sort(), ['allin', 'bet', 'broke', 'call', 'check', 'fold', 'hand_start', 'hands', 'hit', 'raise', 'showdown', 'stand', 'street']);
 });
 
 test('a 21 script that breaks the rules stops with why', () => {
-  const hand = { you: ['10S', '7H'], opp: ['9D', '8C'], draws: ['2S', '3S'] };
+  const hand = { you: ['10S', '7H'], opp: ['9D', '8C'], draws: ['2S'] };
   assert.throws(() => new ScriptedBlackjack({ hands: [{ you: ['10S', '7H'], opp: ['9D', '1C'] }] }), /not a card/);
   assert.throws(() => new ScriptedBlackjack({ hands: [{ you: ['10S', '7H'], opp: ['10S', '8C'] }] }), /twice/);
   assert.throws(() => new ScriptedBlackjack({ hands: [hand] }).move({ who: 'opp', act: 'hit' }), /turn/);
   const d = new ScriptedBlackjack({ hands: [hand] });
-  d.move({ who: 'you', act: 'double' });
-  assert.throws(() => d.move({ who: 'opp', act: 'hit' }), /call or fold/);
+  d.move({ who: 'you', act: 'bet' });
+  assert.throws(() => d.move({ who: 'opp', act: 'hit' }), /can't hit now \(can: call, fold, raise, allin\)/);
   d.move({ who: 'opp', act: 'call' });
+  d.move({ who: 'you', act: 'stand' });
   d.move({ who: 'opp', act: 'hit' });
   assert.throws(() => d.move({ who: 'opp', act: 'hit' }), /out of cards/);
-  // the written hands run out: the table waits on a hand that never comes
   d.move({ who: 'opp', act: 'stand' });
+  // the written hands run out: the table waits on a hand that never comes
+  d.move({ who: 'you', act: 'check' });
+  d.move({ who: 'opp', act: 'check' });
   assert.equal(d.lastHand.winner, 'opp');
   assert.equal(d.turn, null);
   assert.equal(d.phase, 'playing');

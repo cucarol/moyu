@@ -8,7 +8,7 @@ import { STATES, MOODS } from './core.js';
 const ITEM_IDS = ['cot', 'mirage', 'compact', 'inject', 'temp', 'limit', 'refuse', 'cache', 'jailbreak'];
 const EMOJIS = ['😂', '😤', '😏', '😱', '🙏', '😭', '👍', '🐟', '❤️'];
 const AIM = { aimYou: ['opp', 'you'], aimSelf: ['opp', 'opp'], aimedAt: ['you', 'opp'], watching: ['you', 'you'] };
-const CASINO = /^(think(Hand|Call|Keep|Pad)|peekCard|drawCard|stand|double|call|fold|noticeDouble|reveal|bust|natural|winPot|losePot|push|rollDice|scoreBox|yacht|noticeDice)$/;
+const CASINO = /^(think(Hand|Call|Keep|Pad)|peekCard|drawCard|stand|raise|call|fold|noticeRaise|reveal|bust|natural|winPot|losePot|push|rollDice|scoreBox|yacht|noticeDice)$/;
 
 // Plain boxes where a casino room would have its things; the cup can be shaken.
 function standIns(opp) {

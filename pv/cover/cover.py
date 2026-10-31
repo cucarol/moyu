@@ -20,9 +20,8 @@ from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[2]
 CREAM, INK, ORANGE, SLATE = (246, 234, 210), (26, 18, 12), (217, 119, 87), (91, 107, 140)
-LINES = {'zh-CN': ('和你的 Agent', '一起玩游戏！'), 'en': ('Play games', 'with your Agent!')}
-# the wide frame's line: two parallel lines, the second set off to the right and down from the
-# first; in each, the small word slate and the big one hot
+# the line: two parallel lines, the second set off to the right and down from the first; in
+# each, the small word slate and the big one hot
 HEADLINE = {
     'zh-CN': ([('和你的', 7, SLATE), ('Agent', 12, ORANGE)], [('一起', 7, SLATE), ('玩游戏！', 16, ORANGE)]),
     'en': ([('Play', 9, SLATE), ('games', 14, ORANGE)], [('with your', 6, SLATE), ('Agent!', 14, ORANGE)]),
@@ -143,6 +142,9 @@ def cover(frame_path, matte_path, out_path, lang='zh-CN'):
     W, H = frame.size
     tall = H > W
     u = min(W, H) / 1080  # the frame's own unit: 1 at 1080 px across its short side
+    # a 2:1 frame is GitHub's social card, which crops: the line and the face stay 80 px in
+    # from its edges (at 1280 wide), the margin GitHub's template asks for
+    safe = round(80 * W / 1280) if W >= 1.9 * H else 0
     rng = np.random.default_rng(7)
 
     # the subject: the matte's white (its scanlines and the room's dither smoothed out first)
@@ -162,34 +164,39 @@ def cover(frame_path, matte_path, out_path, lang='zh-CN'):
     lit.putalpha(Image.fromarray((lines * 0.55 * ~m).astype(np.uint8)))
     base.alpha_composite(lit)
 
-    # the line, set like Clawd's shouts in the film and tilted a little: across the top of a
-    # wide frame in two staggered parallel lines (HEADLINE); in a tall one, the first part
-    # smaller over the rest
+    # the line, set like Clawd's shouts in the film and tilted a little, across the top in two
+    # staggered parallel lines (HEADLINE); a tall frame staggers them less and sets them as big
+    # as its width allows, low over Clawd's head, clear of it
     font = pixel_font()
-    first, second = LINES[lang]
-    if tall:
-        s2 = round(12 * u)
-        a = shout(first, font, round(s2 * 0.55), SLATE)
-        b = shout(second, font, s2)
-        pad = round(30 * u)
-        block = Image.new('RGBA', (max(a.width, b.width) + 2 * pad, a.height + b.height + 3 * pad))
-        block.alpha_composite(a, ((block.width - a.width) // 2, pad))
-        block.alpha_composite(b, ((block.width - b.width) // 2, a.height + 2 * pad))
-        block = block.rotate(3, Image.BICUBIC, expand=True)
-        base.alpha_composite(block, ((W - block.width) // 2, round(60 * u)))
-    else:
-        a, b = (headline([(t, round(s * u), c) for t, s, c in part], font, round(24 * u)) for part in HEADLINE[lang])
-        dx, dy = round(a.width * 0.62), round(a.height * 0.78)
+    shift = 0.3 if tall else 0.62
+
+    def staggered(k):
+        a, b = (headline([(t, round(s * u * k), c) for t, s, c in part], font, round(24 * u * k)) for part in HEADLINE[lang])
+        dx, dy = round(a.width * shift), round(a.height * 0.78)
         block = Image.new('RGBA', (max(a.width, dx + b.width), dy + b.height))
         block.alpha_composite(a, (0, 0))
         block.alpha_composite(b, (dx, dy))
-        block = block.rotate(4, Image.BICUBIC, expand=True)
-        base.alpha_composite(block, ((W - block.width) // 2, round(16 * u)))
+        return block.rotate(4, Image.BICUBIC, expand=True)
+
+    block = staggered(1)
+    if tall:
+        block = staggered(0.94 * W / block.crop(block.getbbox()).width)
+    if tall or safe:
+        block = block.crop(block.getbbox())
+    if safe:
+        block = block.resize((round(block.width * 0.9), round(block.height * 0.9)), Image.NEAREST)
+    top = max(round(16 * u), safe)
+    if tall:
+        head = int(np.argmax(m.any(axis=1)))  # the subject's top row
+        top = max(round(40 * u), head - round(50 * u) - block.height)
+    base.alpha_composite(block, ((W - block.width) // 2, top))
 
     # you: a pixel 😱 down in the corner across from the line, under the gun's side, leaning
     # away from it
     face = pixel_emoji('😱', 24, round((12 if tall else 11) * u)).rotate(8, Image.BICUBIC, expand=True)
-    base.alpha_composite(face, (W - face.width - round(40 * u), H - face.height - round(36 * u)))
+    if safe:
+        face = face.crop(face.getbbox())
+    base.alpha_composite(face, (W - face.width - max(round(40 * u), safe), H - face.height - max(round(36 * u), safe)))
 
     base.convert('RGB').save(out_path)
     print(out_path, (W, H), 'muzzle', (round(mx), round(my)), 'bore', round(bore))

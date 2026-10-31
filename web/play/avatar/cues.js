@@ -69,7 +69,7 @@ function faceUp(view, me, e) {
   for (const x of view.log) {
     if (x.seq > e.seq) break;
     if (x.type === 'hand_start') up = [x.up[me]];
-    else if ((x.type === 'hit' || x.type === 'double') && x.seat === me) up.push(x.card);
+    else if (x.type === 'hit' && x.seat === me) up.push(x.card);
   }
   return up;
 }
@@ -81,22 +81,26 @@ function blackjack(opp, e, view) {
   switch (e.type) {
     case 'hand_start':
       return opp.setState('peekCard').then(() => (opp.autoActs !== false && idle(opp) && Math.random() < HIDE_CHANCE ? opp.setState('hideCard') : null));
-    case 'hit':
-    case 'double': {
-      if (!mine) return e.type === 'double' ? opp.setState('noticeDouble') : null;
-      const shown = opp.setState(e.type === 'hit' ? 'drawCard' : 'double', { card: e.card });
+    case 'hit': {
+      if (!mine) return null;
+      const shown = opp.setState('drawCard', { card: e.card });
       // over 21 on the face-up cards alone: everyone knows already
       if (total(faceUp(view, me, e)) > 21) return shown.then(() => opp.setState('bust', { public: true }));
       return shown;
     }
+    case 'bet':
+    case 'raise':
+    case 'allin':
+      return opp.setState(mine ? 'raise' : 'noticeRaise');
     case 'stand':
+    case 'check':
       return mine ? opp.setState('stand') : null;
     case 'call':
       return mine ? opp.setState('call') : null;
     case 'fold':
       return mine ? opp.setState('fold') : null;
     case 'settle': {
-      // big: a doubled pot, or the last hands' stakes
+      // big: a pot that was bet into, or the last hands' stakes
       const ante = view.log.findLast((x) => x.type === 'hand_start' && x.seq < e.seq)?.ante ?? Infinity;
       const big = e.pot > 2 * ante || e.pot >= 800_000;
       const pot = () => (e.winner === me && e.naturals?.[me] ? cheer(opp) : opp.setState(!e.winner ? 'push' : e.winner === me ? 'winPot' : 'losePot', { big, pot: e.pot }));

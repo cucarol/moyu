@@ -92,7 +92,7 @@ loads: [                    // each later load: its shells and what each seat is
 first: 'opp',
 start: { round: 1, stacks: { you: 100, opp: 100 } },
 hands: [
-  // each seat's [up, hole], then the draws in play order (either seat's hits and doubles)
+  // each seat's [up, hole], then the draws in play order (either seat's hits)
   { you: ['10S', '8H'], opp: ['6D', '5C'], draws: ['KH', '2C'] },
   // or the raw deck in draw order: first's up, other's up, first's hole, other's hole, draws
   { deck: ['QS', '7H', '9D', '9C', '8S'] },
@@ -135,7 +135,7 @@ A beat with nothing but a camera move, light change or tween waits for it to fin
 | Game | Moves |
 |---|---|
 | roulette | `{ who, use: item \| slot, pick, makes }` · `{ who, shoot: 'self' \| 'other', aim: ms }` |
-| 21 | `{ who, act: 'hit' \| 'stand' \| 'double' \| 'call' \| 'fold', press: ms }` |
+| 21 | `{ who, act: 'hit' \| 'stand' \| 'check' \| 'bet' \| 'raise' \| 'call' \| 'fold' \| 'allin', press: ms }` |
 | Yacht | `{ who, keep: [die indexes], roll: [new dice] }` · `{ who, score: category }` |
 
 `who` is `'opp'` (the agent, default) or `'you'`. Your moves are played the way a hand at the

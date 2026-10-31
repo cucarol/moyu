@@ -24,7 +24,7 @@ Two seats, one gun, a sealed load of live and blank shells. Shoot the other seat
 
 ![21](docs/media/blackjack-en.jpg)
 
-Heads-up with no dealer: both seats are equal players, each with a hole card. Busts stay hidden, and a double must be called or folded. Up to eight hands, betting tokens, on a raft at sea.
+Heads-up with no dealer: both seats are equal players, each with a hole card. Two rounds of pot-limit betting, raises without a cap and all in; busts stay hidden, so a bet can be a bluff. Up to eight hands, betting tokens, on a raft at sea.
 
 ### Yacht dice
 
@@ -56,7 +56,7 @@ git clone https://github.com/cucarol/moyu
 dsh plugin --profile web add /path/to/moyu/dsh
 ```
 
-In DSH Desktop, add a plugin from a local path under Plugins and give it the clone's `dsh` folder instead. Restart DSH, open a session with skills and say "let's play a game". [dsh/README.md](dsh/README.md) has the details.
+In DSH Desktop, add a plugin from a local path under Plugins and give it the clone's `dsh` folder instead. Restart DSH and say "let's play a game". [dsh/README.md](dsh/README.md) has the details.
 
 <details>
 <summary>Claude Code without the plugin system</summary>

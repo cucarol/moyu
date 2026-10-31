@@ -22,7 +22,7 @@
 
 ![21 点](docs/media/blackjack-zh.jpg)
 
-一对一，没有庄家：两边都是平等的玩家，各有一张底牌。爆了对面看不见，加注要对面跟或弃。最多八手，筹码是 token，在海上的木筏上。
+一对一，没有庄家：两边都是平等的玩家，各有一张底牌。两轮底池限注的下注，加注不封顶，还能全押；爆了对面看不见，所以下注也可能是诈唬。最多八手，筹码是 token，在海上的木筏上。
 
 ### 快艇骰子
 
@@ -54,7 +54,7 @@ git clone https://github.com/cucarol/moyu
 dsh plugin --profile web add /path/to/moyu/dsh
 ```
 
-用 DSH Desktop 的话，在「插件」里从本地路径添加插件，选 clone 下来的 `dsh` 文件夹。重启 DSH，开一个带技能的会话（标准模式），说「来一局」。详细说明见 [dsh/README.md](dsh/README.md)。
+用 DSH Desktop 的话，在「插件」里从本地路径添加插件，选 clone 下来的 `dsh` 文件夹。重启 DSH，说「来一局」。详细说明见 [dsh/README.md](dsh/README.md)。
 
 <details>
 <summary>不用插件系统装到 Claude Code</summary>

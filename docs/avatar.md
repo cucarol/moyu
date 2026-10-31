@@ -48,15 +48,15 @@ Any detail may carry `hp` (remembered for later states, so a low-额度 idle can
 
 | State | Kind | When | Detail |
 |---|---|---|---|
-| thinkHand | loop | its turn: hit, stand or double | |
-| thinkCall | loop | you doubled: call or fold | |
+| thinkHand | loop | its turn: hit, stand, check or bet | |
+| thinkCall | loop | you bet: call, raise or fold | |
 | peekCard | 1.3 s | a hand starts: it looks at its hole card, then a poker face | |
 | drawCard | 0.9 s | it hits | `card` |
 | stand | 0.9 s | it stands | |
-| double | 1.2 s | it pushes chips in for a double | `card` |
-| call | 1.1 s | it calls your double | |
-| fold | 1.2 s | it folds to your double | |
-| noticeDouble | 1.1 s | you doubled | |
+| raise | 1.2 s | it pushes chips in: a bet, a raise, all in | |
+| call | 1.1 s | it calls your bet | |
+| fold | 1.2 s | it folds to your bet | |
+| noticeRaise | 1.1 s | you bet | |
 | reveal | 0.9 s | the showdown turns its hole card | |
 | bust | 1.5 s | its hand is over 21 (at the showdown, or `public` when its face-up cards alone are) | `public` |
 | natural | 1.7 s | ace and a ten-card | |
@@ -161,9 +161,9 @@ useItem, noticeItem → nod     healed, scored, relief, emote → happy
 catch, wince → hit     refused, limited, fakeItem → shake
 noticeFake, roundWon → happy     roundLost → sad
 thinkHand, thinkCall, thinkKeep, thinkPad → thinking
-peekCard, drawCard, stand, reveal, scoreBox → nod      double, call → bet → nod
+peekCard, drawCard, stand, reveal, scoreBox → nod      raise, call → bet → nod
 fold, losePot → sad    bust → hit     natural, winPot, yacht → happy     push, rollDice → shake
-noticeDouble, noticeDice → noticeItem → nod
+noticeRaise, noticeDice → noticeItem → nod
 wave, cheer → happy    yawn → stretch → idle    hideCard → nod    glance → idle
 ```
 

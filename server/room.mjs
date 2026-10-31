@@ -4,7 +4,8 @@
 // across games, and chat said with no game on wakes the agent too.
 import { randomBytes } from 'node:crypto';
 import { words } from './games/roulette.mjs';
-import { DEFAULT_LANG, Table, cleanLang, moodError, renameError, renameLine, rulesError } from './table.mjs';
+import { Waiter } from './next.mjs';
+import { DEFAULT_LANG, HUMAN, Table, cleanLang, moodError, renameError, renameLine, rulesError } from './table.mjs';
 
 const token = () => randomBytes(16).toString('hex');
 
@@ -48,7 +49,7 @@ function summary(t) {
 const CHAT_SHOWN = 200;
 
 export class Room {
-  constructor({ scene: asked = 'raft', agentName = 'Clawd', humanName = 'Human' } = {}) {
+  constructor({ scene: asked = 'raft', agentName = 'Clawd' } = {}) {
     const scene = sceneId(asked);
     if (!SCENES[scene]) throw new Error(`unknown scene: ${scene}; one of ${Object.keys(SCENES).join(', ')}`);
     this.id = randomBytes(4).toString('hex');
@@ -57,7 +58,7 @@ export class Room {
     this.createdAt = Date.now();
     this.updatedAt = this.createdAt;
     this.seats = [
-      { id: 'human', name: humanName, kind: 'human', token: token() },
+      { id: 'human', name: HUMAN, kind: 'human', token: token() },
       { id: 'agent', name: agentName, kind: 'agent', token: token() },
     ];
     this.chat = []; // lines said with no game on; each game keeps its own
@@ -70,6 +71,7 @@ export class Room {
   // What is not saved: the sockets, the current table and the server's hooks.
   init() {
     this.subs = new Set();
+    this.waiter = new Waiter(null, () => this.wake()); // the agent's moyu next
     this.table = null;
     this.getTable = () => null; // set by the server: a table by id
     this.addTable = null; // set by the server: register and persist a new table
@@ -89,6 +91,7 @@ export class Room {
     r.scene = sceneId(r.scene);
     r.history ??= [];
     r.lang ??= null;
+    r.human.name = HUMAN; // saved when the human's seat could have a name
     r.init();
     return r;
   }
@@ -251,7 +254,9 @@ export class Room {
 
   // ---- what each side is told ---------------------------------------------
 
+  // While the agent asks with moyu next, its frames go there and nowhere else.
   sendAgent(text) {
+    if (this.waiter.active) return this.waiter.send(text);
     let sent = false;
     for (const sub of this.subs) if (sub.seat.kind === 'agent' && sub.send(text)) sent = true;
     return sent;
@@ -275,6 +280,18 @@ export class Room {
     }
     t?.changed();
     this.changed();
+  }
+
+  // moyu next --room: the agent's next frame, at once if one is owed, else when one comes
+  // or after ms (null). Held while a game is on (see Waiter).
+  async next(ms, signal) {
+    const now = this.agentUpdate();
+    if (now) this.waiter.hold();
+    const text = now ?? (await this.waiter.wait(ms, signal));
+    if (!this.live) this.waiter.release(); // between games, chat wakes the agent as usual
+    this.table?.changed();
+    this.changed();
+    return text;
   }
 
   // Text for the agent, or null when nothing is worth a wake: room chat, a table just

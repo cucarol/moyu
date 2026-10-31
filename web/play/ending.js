@@ -28,21 +28,20 @@ export function sealTag(commit) {
 
 let shownFor = null;
 
-// How to play again: in a room, buttons (set by room.js); on a plain table, a word to the agent.
+// How to play again: in a room, buttons (set by room.js); on a plain table, a word to the
+// agent, said as a plain line (nothing here to click).
 let again = null;
 export function setAgain(fn) {
   again = fn;
 }
 export function againRow(opp) {
   if (again) return again();
-  const row = el('div', 'result-again');
-  row.append(el('span', 'key', t('ui.ending.again')), el('span', '', t('ui.ending.againHint', { name: opp })));
-  return row;
+  return el('div', 'result-again hint', t('ui.ending.againHint', { name: opp }));
 }
 
-// v: the final view. outcome: 'won' | 'lost' | 'draw'. rows: [[name, value]] for each seat.
-// what: what the seed sealed (牌序, 骰子). opp: the agent's name.
-export async function showEnding({ v, outcome, title, big, sub, rows, what, opp }) {
+// v: the final view. outcome: 'won' | 'lost' | 'draw'. rows: [[name, value]] for each seat,
+// right under the big line. what: what the seed sealed (牌序, 骰子). opp: the agent's name.
+export async function showEnding({ v, outcome, title, big, rows, what, opp }) {
   if (shownFor === v.commit) return;
   shownFor = v.commit;
   const panel = el('section', `window result ${outcome}`);
@@ -68,7 +67,7 @@ export async function showEnding({ v, outcome, title, big, sub, rows, what, opp 
   close.onclick = () => (panel.hidden = true);
   const actions = el('div', 'result-actions');
   actions.append(close);
-  panel.append(head, el('div', 'result-big', big), el('div', 'result-sub', sub), seats, seal, againRow(opp), actions);
+  panel.append(head, el('div', 'result-big', big), seats, seal, againRow(opp), actions);
   if (!v.seed) return check.remove();
   try {
     const ok = (await sha256Hex(v.seed)) === v.commit;

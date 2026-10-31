@@ -44,7 +44,7 @@ so levels can be balanced without listening. Open it from a running moyu server 
 land with the room's animations. The hook names were agreed with Art & UI on card-bcpydqqf.
 
 - Bed (`VIBES.raft` = `VIBES.blackjack` = `VIBES.yacht`): the music is Lantern
-  (`TRACKS.lantern`, below). Tension (a big pot, a double waiting on a call, a close game
+  (`TRACKS.lantern`, below). Tension (a big pot, a bet waiting on a call, a close game
   in the last hands or turns) busies its hats, opens its pad and brings in a few high notes.
 - Under it, on the ambience level, the sea around the raft (`RAFT_LEVEL`): a low wash far
   off on either side; water lapping at the raft's left, right and far edges, each swelling

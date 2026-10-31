@@ -678,7 +678,7 @@ export default {
         P.eyes = 'flat';
         P.lean = -0.05 * wave(k);
       },
-      double(c) {
+      raise(c) {
         const { k } = c;
         P.lean = 0.12 * wave(k);
         P.eyes = k < 0.6 ? 'angry' : 'smug';
@@ -703,7 +703,7 @@ export default {
         P.lean = 0.12 * Math.min(1, k * 2);
         if (k > 0.45) arm(1, 1, -0.9, 0, 0.05);
       },
-      noticeDouble(c) {
+      noticeRaise(c) {
         const { k } = c;
         P.eyes = k < 0.5 ? 'wide' : 'squint';
         P.sweat = true;

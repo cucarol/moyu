@@ -131,7 +131,7 @@ export function createSeat({ session = null, listening = async () => false, list
           const view = r && (await api(`/api/rooms/${r.id}/view?k=${r.k}`).catch(() => null));
           if (view) return { text: await roomText(r, view.text) };
         }
-        const created = await api('/api/rooms', { scene: opts.scene ?? 'raft', agentName: opts.name, humanName: opts.human ?? 'Human' });
+        const created = await api('/api/rooms', { scene: opts.scene ?? 'raft', agentName: opts.name });
         const r = { id: created.id, k: created.agentToken, ws: created.agentWs, humanUrl: created.humanUrl, session };
         await mkdir(ROOMS, { recursive: true });
         writeAtomic(join(ROOMS, `${r.id}.json`), JSON.stringify(r, null, 2));
@@ -147,7 +147,7 @@ export function createSeat({ session = null, listening = async () => false, list
       }
       case 'new': {
         await ensureServer();
-        const t = await api('/api/tables', { game: opts.game ?? 'roulette', agentName: opts.name, humanName: opts.human ?? 'Human', rules: opts.rules });
+        const t = await api('/api/tables', { game: opts.game ?? 'roulette', agentName: opts.name, rules: opts.rules });
         await mkdir(TABLES, { recursive: true });
         writeAtomic(join(TABLES, `${t.id}.json`), JSON.stringify({ id: t.id, game: t.game, k: t.agentToken, ws: t.agentWs, commit: t.commit, session }, null, 2));
         writeAtomic(LAST, t.id);
@@ -173,9 +173,12 @@ export function createSeat({ session = null, listening = async () => false, list
       }
       case 'hit':
       case 'stand':
-      case 'double':
+      case 'check':
+      case 'bet':
+      case 'raise':
       case 'call':
       case 'fold':
+      case 'allin':
       case 'quit':
         return { text: await act(opts.table, { action: cmd, say: opts.say, mood: opts.mood }) };
       case 'keep':
@@ -213,6 +216,22 @@ export function createSeat({ session = null, listening = async () => false, list
         const s = await tableState(opts.table);
         await ensureServer();
         return { text: (await api(`/api/tables/${s.id}/say`, { k: s.k, text: rest.join(' '), mood: opts.mood })).text };
+      }
+      case 'next': {
+        // Waits (90 s by default) for the next frame, so a whole game can be played inside
+        // one turn; while the agent keeps asking, its listener stays quiet.
+        const wait = Number(opts.wait ?? 90);
+        if (opts.room) {
+          const r = await roomState(opts.room);
+          await ensureServer();
+          const { text } = await api(`/api/rooms/${r.id}/next?k=${r.k}&wait=${wait}`);
+          return { text: text ?? `[moyu room ${r.id}] Nothing new yet. Wait again: moyu next --room ${r.id}` };
+        }
+        const s = await tableState(opts.table);
+        await ensureServer();
+        const { text, closed } = await api(`/api/tables/${s.id}/next?k=${s.k}&wait=${wait}`);
+        if (closed) return { text: `[moyu ${s.id}] The table has closed: the talk after the game is over.` };
+        return { text: text ?? `[moyu ${s.id}] Nothing new yet. Wait again: moyu next --table ${s.id}` };
       }
       case 'ws': {
         // Also starts the server, so a listener re-armed with this URL can connect.

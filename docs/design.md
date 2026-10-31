@@ -77,6 +77,15 @@ The server used to run until the machine shut down. Now it stops once, for `MOYU
 - Both listeners (`cli/listen.mjs`, `dsh/watch.js`), on finding the server gone, try once every `MOYU_DOWN_MS` (30 s) and stay alive; the Claude Code one must not exit, since its monitor only starts on a skill call. A newer `server-up` ends the wait at once, so after an agent's command restarts the server the next frame is not 30 s late. On reconnect the server resends whatever the seat was not yet told. The DSH watcher keeps its heartbeat (its claims) while it waits.
 - Pages: a socket that drops checks `/api/health`; if the server is gone the status says the table is asleep and to ask the agent to continue, and it keeps trying every 5 s. A reload while it is stopped would get the browser's error page, so the pages register a service worker (`/sw.js`, at the root to cover `/t/` and `/r/`) that answers a failed navigation with a small "asleep" page, which reloads itself once `/api/health` answers. It caches nothing.
 
+### The agent waits inside its turn (2026-10-31)
+
+Every frame from the listener was a new turn, and each turn ended with a line in the chat (a "·", a recap), so a game filled the user's chat with noise. `moyu next --table <id>` (or `--room`) is a long poll instead: `GET /api/tables/<id>/next` (`/api/rooms/<id>/next`) holds up to `--wait` seconds (90, clamped to 1–240) and returns the seat's next frame, or `Nothing new yet`. The skill plays the game as one loop of `next` calls inside a turn, so frames are tool results and nothing goes to the chat; after three empty waits in a row it ends the turn without a word.
+
+- `server/next.mjs`: a `Waiter` sits among the table's subscribers as one more socket. While a request is pending, and for `MOYU_HOLD_MS` (60 s) after each answer, only the waiter is told: the table skips the seat's other agent subscribers, and a room sends through its waiter.
+- A frame that comes between two requests stays owed (the told cursors are put back) and goes to the next request. When the hold runs out with something still owed, it goes to the listener as usual, so an agent that stopped asking is still woken.
+- A client that hangs up aborts the wait without losing the frame. At game over the waiter releases the seat.
+- DSH has no `moyu_next`: its frames arrive as collapsed follow-up cards, and its skill already keeps them out of the chat.
+
 ## Two kinds of external trigger
 
 - **Armed:** once a game starts, the agent itself starts a listener; afterwards every table event wakes it. CC: `Monitor` (ws), now the moyu plugin's listener. DSH: the moyu plugin (`dsh/`). Solid on both.
@@ -98,9 +107,9 @@ Claude Code first, playing with the user in this session. Local server (`server/
 
 ## Game pool (ideas, 2026-10-29)
 
-- Blackjack: a first version is built (both seats vs the engine's dealer; rebuy when broke). Decided 2026-10-29: it becomes heads-up 21 with no dealer, both seats equal players with a hole card each, hidden busts, doubles to call or fold, token stacks (rules: docs/blackjack.md). A dealer seat for the agent was considered and dropped: it only dressed one player up as the house.
+- Blackjack: a first version is built (both seats vs the engine's dealer; rebuy when broke). Decided 2026-10-29: it becomes heads-up 21 with no dealer, both seats equal players with a hole card each, hidden busts, doubles to call or fold, token stacks (rules: docs/blackjack.md). Changed 2026-10-31: the double gave way to two pot-limit betting rounds (after the deal, before the showdown) with uncapped raises and all in, and a bust can only stand (the user: 更赌博一点). A dealer seat for the agent was considered and dropped: it only dressed one player up as the house.
 - Yacht dice: rules in docs/yacht.md.
-- Built 2026-10-29: heads-up 21 and Yacht engines, CLI (`hit|stand|double|call|fold`, `keep|score`), verify by replay. Their 3D clients share the casino room (`web/play/casino.js`, `blackjack.js`, `yacht.js`, with the seat loop in `seat.js`); the 2D stand-in pages are gone.
+- Built 2026-10-29: heads-up 21 and Yacht engines, CLI (`hit|stand`, and since 2026-10-31 `check|bet|raise|call|fold|allin`; `keep|score`), verify by replay. Their 3D clients share the casino room (`web/play/casino.js`, `blackjack.js`, `yacht.js`, with the seat loop in `seat.js`); the 2D stand-in pages are gone.
 - Roulette, Buckshot-like: the user wants it. Genre mechanics are free to use (mixed live/blank loads with public counts, shooting yourself or the other, HP, items that peek or change the load); the load order is a natural sealed secret (commit at the start, reveal at the end). Every item is an AI joke of our own (「道具之类的肯定都要和 AI 有关系」); an item may do something a Buckshot item does, as long as the joke, name and look are ours.
 - 老板来了: an original push-your-luck draw (known count of boss slips, hidden order; draw yourself or make the other draw; office items).
 - Old maid (抽鬼牌), Yacht dice, a daily fortune draw.

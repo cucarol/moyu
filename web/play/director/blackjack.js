@@ -4,7 +4,7 @@
 // games through both and checks they agree. Pure: no DOM.
 //
 // Each hand's cards, in the order they're dealt: { you: [up, hole], opp: [up, hole],
-// draws: [...] } (draws go to the hits and doubles in play order, either seat's), or the
+// draws: [...] } (draws go to the hits in play order, either seat's), or the
 // raw deck { deck: [...] } in draw order (first actor's up, the other's up, first's hole,
 // the other's hole, then the draws). Cards are rank and suit: 'AS', '10H', 'KD', '7C'.
 
@@ -58,13 +58,15 @@ export class ScriptedBlackjack {
     const st = script.start ?? {};
     this.round = (st.round ?? 1) - 1; // hands played before this one
     this.phase = 'playing';
-    this.seats = ['you', 'opp'].map((id) => ({ id, name: script.seats?.[id] ?? (id === 'you' ? '你' : 'Clawd'), stack: st.stacks?.[id] ?? START_STACK, stake: 0, hand: [], stood: false, acted: false, doubled: false }));
+    this.seats = ['you', 'opp'].map((id) => ({ id, name: script.seats?.[id] ?? (id === 'you' ? '你' : 'Clawd'), stack: st.stacks?.[id] ?? START_STACK, stake: 0, bet: 0, hand: [], stood: false }));
     // the seat to act first in the opening hand; past hand 1, startHand takes the other
     // seat from the hand before, so that one is kept here
     this.first = this.round === 0 ? (script.first ?? 'you') : this.other(script.first ?? 'you');
+    this.street = null;
     this.turn = null;
     this.turnNo = 0;
     this.facing = null;
+    this.spoke = false;
     this.pos = 0;
     this.lastHand = null;
     this.winner = null;
@@ -125,30 +127,49 @@ export class ScriptedBlackjack {
     this.deck = this.deckOf(this.hands[this.handNo++], first);
     this.pos = 0;
     const order = [first, this.other(first)];
-    for (const s of this.seats) Object.assign(s, { stack: s.stack - ante, stake: ante, hand: [], stood: false, acted: false, doubled: false });
+    for (const s of this.seats) Object.assign(s, { stack: s.stack - ante, stake: ante, bet: 0, hand: [], stood: false });
     for (let i = 0; i < 2; i++) for (const id of order) this.seat(id).hand.push(this.draw());
-    this.turn = first;
-    this.facing = null;
-    this.turnNo++;
     this.emit('hand_start', { ante, first, up: Object.fromEntries(order.map((id) => [id, this.seat(id).hand[0]])) });
+    this.openStreet('bet1');
+  }
+
+  openStreet(street) {
+    for (const s of this.seats) s.bet = 0;
+    this.facing = null;
+    this.spoke = false;
+    if (street !== 'draw' && this.seats.some((s) => s.stack === 0)) return street === 'bet1' ? this.openStreet('draw') : this.showdown();
+    this.street = street;
+    this.turn = this.first;
+    this.turnNo++;
+    if (street !== 'bet1') this.emit('street', { street });
+  }
+
+  price(seatId) {
+    const me = this.seat(seatId);
+    const o = this.seat(this.other(seatId));
+    const call = o.bet - me.bet;
+    const room = Math.min(me.stack - call, o.stack);
+    return { call, room, pot: Math.min(this.pot + call, room), allin: call + room };
   }
 
   legalActions(seatId) {
     if (this.phase !== 'playing' || this.turn !== seatId) return [];
-    if (this.facing === seatId) return ['call', 'fold'];
     const me = this.seat(seatId);
-    const actions = ['hit', 'stand'];
-    if (!me.acted && this.seats.every((s) => s.stack >= this.ante)) actions.push('double');
+    if (this.street === 'draw') return handTotal(me.hand).total > 21 ? ['stand'] : ['hit', 'stand'];
+    const p = this.price(seatId);
+    const actions = p.call ? ['call', 'fold'] : ['check'];
+    if (p.room > 0 && p.pot < p.room) actions.push(p.call ? 'raise' : 'bet');
+    if (p.room > 0) actions.push('allin');
     return actions;
   }
 
-  // { who, act: 'hit' | 'stand' | 'double' | 'call' | 'fold', mood }
+  // { who, act: 'hit' | 'stand' | 'check' | 'bet' | 'raise' | 'call' | 'fold' | 'allin', mood }
   move(m) {
     const seatId = m.who ?? 'opp';
     const action = m.act;
     if (this.phase !== 'playing') throw new Error('the game is over');
     if (this.turn !== seatId) throw new Error(`it is ${this.turn}'s turn, not ${seatId}'s`);
-    if (!this.legalActions(seatId).includes(action)) throw new Error(this.facing === seatId ? `${seatId} must call or fold the double first` : `${seatId} can't ${action} now (can: ${this.legalActions(seatId).join(', ')})`);
+    if (!this.legalActions(seatId).includes(action)) throw new Error(`${seatId} can't ${action} now (can: ${this.legalActions(seatId).join(', ')})`);
     const from = this.log.length;
     this.apply(seatId, action);
     if (m.mood && this.log[from]) this.log[from].mood = m.mood;
@@ -161,52 +182,62 @@ export class ScriptedBlackjack {
       case 'hit': {
         const card = this.draw();
         me.hand.push(card);
-        me.acted = true;
         this.emit('hit', { seat: seatId, card });
-        break;
+        return this.nextDraw(seatId);
       }
       case 'stand':
-        me.stood = me.acted = true;
+        me.stood = true;
         this.emit('stand', { seat: seatId });
-        break;
-      case 'double': {
-        me.stack -= this.ante;
-        me.stake += this.ante;
-        const card = this.draw();
-        me.hand.push(card);
-        me.stood = me.acted = me.doubled = true;
-        this.emit('double', { seat: seatId, card, amount: this.ante });
+        return this.nextDraw(seatId);
+      case 'check':
+        this.emit('check', { seat: seatId });
+        return this.spoke ? this.closeStreet() : this.pass(o);
+      case 'bet':
+      case 'raise':
+      case 'allin': {
+        const p = this.price(seatId);
+        const amount = action === 'allin' ? p.allin : p.call + p.pot;
+        this.put(me, amount);
+        this.emit(action, { seat: seatId, amount, to: me.bet });
         this.facing = o;
-        this.turn = o;
-        this.turnNo++;
-        return;
+        return this.pass(o);
       }
-      case 'call':
-        me.stack -= this.ante;
-        me.stake += this.ante;
-        this.facing = null;
-        this.emit('call', { seat: seatId, amount: this.ante });
-        if (!me.stood) {
-          this.turnNo++;
-          return;
-        }
-        break;
+      case 'call': {
+        const amount = this.price(seatId).call;
+        this.put(me, amount);
+        this.emit('call', { seat: seatId, amount });
+        return this.closeStreet();
+      }
       case 'fold':
         this.emit('fold', { seat: seatId });
-        this.settle(o, 'fold');
-        return;
+        return this.settle(o, 'fold');
     }
-    this.next(seatId);
   }
 
-  next(seatId) {
-    const o = this.other(seatId);
-    const after = !this.seat(o).stood ? o : !this.seat(seatId).stood ? seatId : null;
-    if (!after) return this.showdown();
-    this.turn = after;
+  put(s, amount) {
+    s.stack -= amount;
+    s.stake += amount;
+    s.bet += amount;
+  }
+
+  pass(to) {
+    this.spoke = true;
+    this.turn = to;
     this.turnNo++;
   }
 
+  closeStreet() {
+    if (this.street === 'bet1') this.openStreet('draw');
+    else this.showdown();
+  }
+
+  nextDraw(seatId) {
+    const o = this.other(seatId);
+    const after = !this.seat(o).stood ? o : !this.seat(seatId).stood ? seatId : null;
+    if (!after) return this.openStreet('bet2');
+    this.turn = after;
+    this.turnNo++;
+  }
   showdown() {
     const [a, b] = this.seats;
     const c = compare(a.hand, b.hand);
@@ -222,7 +253,9 @@ export class ScriptedBlackjack {
     const totals = Object.fromEntries(this.seats.map((s) => [s.id, shown ? handTotal(s.hand).total : null]));
     const naturals = Object.fromEntries(this.seats.map((s) => [s.id, shown && isNatural(s.hand)]));
     const stacks = Object.fromEntries(this.seats.map((s) => [s.id, s.stack]));
-    for (const s of this.seats) s.stake = 0;
+    for (const s of this.seats) s.stake = s.bet = 0;
+    this.street = null;
+    this.facing = null;
     this.lastHand = { round: this.round, how, winner, pot, hands, totals, naturals, stacks };
     this.emit('settle', { how, winner, pot, hands, totals, naturals, stacks });
     // a script that ends here needs no next hand's cards: the game stops on this hand
@@ -238,6 +271,7 @@ export class ScriptedBlackjack {
 
   finish(reason) {
     this.phase = 'over';
+    this.street = null;
     this.turn = null;
     this.facing = null;
     const [a, b] = this.seats;
@@ -250,27 +284,30 @@ export class ScriptedBlackjack {
   }
 
   view(seatId = 'you') {
+    const legal = this.legalActions(seatId);
     return {
       game: 'blackjack',
       you: seatId,
       round: this.round,
       rounds: this.rounds,
       phase: this.phase,
+      street: this.street,
       turn: this.turn,
       turnNo: this.turnNo,
       ante: this.ante ?? null,
       pot: this.pot,
       first: this.first,
       facing: this.facing,
+      price: legal.includes('allin') || legal.includes('call') ? this.price(seatId) : null,
       seats: this.seats.map((s) => {
         const mine = s.id === seatId;
         const hand = mine ? s.hand.slice() : s.hand.map((c, i) => (i === 1 ? '??' : c));
-        return { id: s.id, name: s.name, stack: s.stack, stake: s.stake, stood: s.stood, doubled: s.doubled, hand, total: s.hand.length ? handTotal(mine ? s.hand : faceUp(s.hand)) : null };
+        return { id: s.id, name: s.name, stack: s.stack, stake: s.stake, bet: s.bet, stood: s.stood, hand, total: s.hand.length ? handTotal(mine ? s.hand : faceUp(s.hand)) : null };
       }),
       lastHand: this.lastHand,
       winner: this.winner,
       waitingOn: this.phase === 'playing' && this.turn ? [this.turn] : [],
-      legal: this.legalActions(seatId),
+      legal,
       commit: this.commit,
       seed: null,
       log: this.log.slice(),

@@ -17,7 +17,7 @@ Table prompts are written as CLI commands, e.g. `Your turn: moyu shoot me | moyu
 
 ## 1. Open the table
 
-`moyu_new {human: "<user's name, if known>"}` opens roulette; add `game: "blackjack"` for 21 点 or `game: "yacht"` for dice. It starts the moyu server itself and returns:
+`moyu_new {}` opens roulette; add `game: "blackjack"` for 21 点 or `game: "yacht"` for dice. It starts the moyu server itself and returns:
 
 - the table id: pass it as `table` on every later call
 - the human's link: give it to the user as a clickable markdown link, e.g. `[来这里坐下](http://127.0.0.1:7330/t/…)`. That link is the user's seat; never open it or act through it.
@@ -52,7 +52,7 @@ The table stays open about 10 minutes after the game for talk. A user's chat lin
 
 ## Rooms
 
-A room is one link the user keeps open, game or not: 小木筏 raft (21 点, 快艇骰子) or 机房 machine (轮盘). `moyu_room {human}` reopens your last room (`new: true` for a fresh one, `scene: "machine"` for the machine room). Give the link, then end your turn. Frames start with `[moyu room <id>]`:
+A room is one link the user keeps open, game or not: 小木筏 raft (21 点, 快艇骰子) or 机房 machine (轮盘). `moyu_room {}` reopens your last room (`new: true` for a fresh one, `scene: "machine"` for the machine room). Give the link, then end your turn. Frames start with `[moyu room <id>]`:
 
 - **`A <game> table is open: <table id>`**: the user started a game. It may carry your record with them (`Only you see this`): weave it in now and then as a callback, never as a scoreboard. Play it as in steps 2 and 3 with that `table`; no `moyu_new`.
 - **`Game over`**: verify as in step 4, say the result in a line, back to work.

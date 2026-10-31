@@ -1807,7 +1807,7 @@ function raft(E) {
       const playing = v.phase === 'playing';
       let x = 0;
       if (playing && v.game === 'blackjack') {
-        // a big pot, a double waiting on a call, a close game in the last hands
+        // a big pot, a bet waiting on a call, a close game in the last hands
         const stacks = v.seats.map((s) => s.stack);
         x = Math.min(0.5, v.pot / 1600000) + (v.facing ? 0.3 : 0) + (v.round >= v.rounds - 2 && Math.abs(stacks[0] - stacks[1]) < 400000 ? 0.3 : 0);
       } else if (playing && v.game === 'yacht') {

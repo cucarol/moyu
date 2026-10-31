@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import * as blackjack from './games/blackjack.mjs';
 import * as roulette from './games/roulette.mjs';
 import * as yacht from './games/yacht.mjs';
+import { Waiter } from './next.mjs';
 import { newSeed } from './seal.mjs';
 
 const token = () => randomBytes(16).toString('hex');
@@ -19,11 +20,13 @@ export const moodError = (mood) => (mood && !MOODS.includes(mood) ? { error: `un
 export const DEFAULT_LANG = Intl.DateTimeFormat().resolvedOptions().locale;
 export const cleanLang = (lang) => (/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(lang ?? '')) ? String(lang) : null);
 
-// Only the human renames, either seat. The new name lands in chat as a line of its own,
-// so the agent hears it and the page can show it.
+// The human's seat has no name of its own: the page calls it "you", the agent's text "Human".
+export const HUMAN = 'Human';
+// Only the human renames, and only the agent's seat. The new name lands in chat as a line
+// of its own, so the agent hears it and the page can show it.
 export function renameError(seat, who, name) {
   if (seat.kind !== 'human') return { error: 'only the human renames seats' };
-  if (who !== 'agent' && who !== 'human') return { error: 'rename agent or human' };
+  if (who !== 'agent') return { error: 'only the agent seat takes a name' };
   const clean = String(name ?? '').trim();
   if (!clean || [...clean].length > 24) return { error: 'a name is 1 to 24 characters' };
   return null;
@@ -55,7 +58,7 @@ export class Table {
 
   // A table in a room takes the room's seats, tokens and all, so the room's link and
   // the agent's room token work at every table played in it.
-  constructor({ game = 'roulette', agentName = 'Clawd', humanName = 'Human', room = null, seats = null, lang = null, rules = null }) {
+  constructor({ game = 'roulette', agentName = 'Clawd', room = null, seats = null, lang = null, rules = null }) {
     if (!KINDS[game]) throw new Error(`unknown game: ${game}`);
     if (rulesError(game, rules)) throw new Error(rulesError(game, rules));
     this.kind = game;
@@ -65,12 +68,13 @@ export class Table {
     this.createdAt = Date.now();
     this.updatedAt = this.createdAt;
     this.seats = seats ? structuredClone(seats) : [
-      { id: 'human', name: humanName, kind: 'human', token: token() },
+      { id: 'human', name: HUMAN, kind: 'human', token: token() },
       { id: 'agent', name: agentName, kind: 'agent', token: token() },
     ];
     this.game = new KINDS[game].Game({ seats: this.seats, seed: newSeed(), ...(rules && KINDS[game].rules && { rules }) });
     this.chat = [];
     this.subs = new Set();
+    this.waiters = {}; // per agent seat, once it asks with moyu next
     // Per agent seat: log and chat already told, and the last turn it was prompted for.
     this.told = Object.fromEntries(this.seats.filter((s) => s.kind === 'agent').map((s) => [s.id, { log: 0, chat: 0, promptKey: null }]));
     this.onChange = null; // set by the server to persist the table
@@ -92,7 +96,10 @@ export class Table {
     t.room ??= null;
     t.lang ??= null;
     t.game = KINDS[t.kind].Game.fromJSON(game);
+    // saved when the human's seat could have a name
+    for (const s of [...t.seats, ...t.game.seats]) if (s.id === 'human') s.name = HUMAN;
     t.subs = new Set();
+    t.waiters = {};
     t.onChange = null;
     return t;
   }
@@ -210,11 +217,32 @@ export class Table {
   }
 
   push(sub) {
+    // While the agent asks with moyu next, its frames go there and nowhere else.
+    if (!sub.waiter && this.waiters[sub.seat.id]?.active) return;
     // A socket already closing must not mark the update as told, or a re-armed
     // listener would never get it.
     const before = { ...this.told[sub.seat.id] };
     const text = this.agentUpdate(sub.seat);
     if (text && sub.send(text) === false) this.told[sub.seat.id] = before;
+  }
+
+  // moyu next: the agent's next frame, at once if one is owed, else when one comes or
+  // after ms (null). The seat stays held while the game is on (see Waiter).
+  async next(seat, ms, signal) {
+    let w = this.waiters[seat.id];
+    if (!w) {
+      w = this.waiters[seat.id] = new Waiter(seat, () => {
+        for (const sub of this.subs) if (sub.seat.id === seat.id && !sub.waiter) this.push(sub);
+        this.changed();
+      });
+      this.subs.add(w);
+    }
+    const now = this.agentUpdate(seat);
+    if (now) w.hold();
+    const text = now ?? (await w.wait(ms, signal));
+    if (this.game.phase === 'over') w.release(); // the talk after it wakes the agent as usual
+    this.changed();
+    return text;
   }
 
   humanState(seat) {

@@ -1,7 +1,8 @@
 // Heads-up 21 in the casino: no dealer, each of you an up card and a hole card, eight
-// hands paid in tokens. Your hole card lies face up with a violet edge (only you can see
-// it); the agent's stays face down until a showdown turns it over. The shoe deals a card,
-// the bell stands, your tokens double or call.
+// hands paid in tokens, with a betting round after the deal and one before the showdown.
+// Your hole card lies face up with a violet edge (only you can see it); the agent's stays
+// face down until a showdown turns it over. The shoe deals a card, the bell stands (or
+// checks), your tokens bet, raise, call or go all in.
 import { THREE, canvasTex, pixelText, drawBits, mat } from './stage.js';
 import { roomOptions as casinoOptions, TABLE_Y, tokens, chipSpot, flyChips, addGlints } from './casino.js';
 import { joinTable, sfx, mood, cues } from './seat.js';
@@ -11,7 +12,6 @@ import { t as tr } from './i18n.js';
 import { reviewAvatar } from './avatar/review.js'; // avatar
 
 export const roomOptions = casinoOptions;
-const OPP = 'Clawd';
 
 const SUIT_BITS = {
   H: ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
@@ -74,6 +74,9 @@ function handTotal(cards) {
   return { total, soft: aces > 0 };
 }
 
+// a soft hand shows both ways its ace counts, 7/17
+const points = ({ total, soft }) => (soft && total < 21 ? `${total - 10}/${total}` : total);
+
 const CARD = { w: 0.09, h: 0.002, d: 0.128 };
 const HANDS = {
   you: { x: -0.12, z: 0.2, step: 0.072 },
@@ -134,11 +137,11 @@ function buildRoom(stage, casino) {
   pickable('shoe', shoe);
   pickable('bell', bell);
 
-  // -- tokens: yours by your right hand, theirs across, the pot between
+  // -- tokens: yours by your right hand, theirs across, the pot between, pushed in loose
   const piles = {
     you: chipSpot(stage, 'stack', new THREE.Vector3(-0.42, TABLE_Y, 0.24)),
     opp: chipSpot(stage, null, new THREE.Vector3(-0.2, TABLE_Y, -0.3)),
-    pot: chipSpot(stage, null, new THREE.Vector3(-0.32, TABLE_Y, 0.0)),
+    pot: chipSpot(stage, null, new THREE.Vector3(-0.32, TABLE_Y, 0.0), { loose: true }),
   };
   addGlints(stage, () => Object.values(piles));
 
@@ -160,19 +163,19 @@ function buildRoom(stage, casino) {
     card.userData.code = code;
   }
 
-  function slot(who, i, sideways) {
+  function slot(who, i) {
     const h = HANDS[who];
-    return new THREE.Vector3(h.x + i * h.step + (sideways ? h.step * 0.2 : 0), TABLE_Y + 0.003 + i * 0.0025, h.z);
+    return new THREE.Vector3(h.x + i * h.step, TABLE_Y + 0.003 + i * 0.0025, h.z);
   }
 
   // code: what's on its face, null for face down. hole: your own hole card.
-  async function deal(who, code, { hole = false, sideways = false, instant = false } = {}) {
+  async function deal(who, code, { hole = false, instant = false } = {}) {
     const card = cardMesh();
     setFace(card, code, hole);
-    const to = slot(who, hands[who].length, sideways);
+    const to = slot(who, hands[who].length);
     hands[who].push(card);
     scene.add(card);
-    const rotTo = (sideways ? Math.PI / 2 : 0) + (Math.random() - 0.5) * 0.1;
+    const rotTo = (Math.random() - 0.5) * 0.1;
     card.userData.rest = rotTo;
     pickable(`card:${who}:${hands[who].length - 1}`, card);
     if (instant) {
@@ -243,21 +246,23 @@ function buildRoom(stage, casino) {
     });
   }
 
-  // a hand's tags go beside its first card, on the side it doesn't grow; yours goes just
-  // in front of it instead, clear of your tokens to its left
+  // a hand's tag goes just in front of it: yours from its first card, clear of your tokens
+  // to its left; theirs under the middle of the hand, clear of the shoe's tag to its right
   const handScreen = (who) => {
     const h = HANDS[who];
-    const side = Math.sign(h.step) * (CARD.w / 2 + 0.008);
     if (who === 'you') return project(new THREE.Vector3(h.x - CARD.w / 2, TABLE_Y + 0.01, h.z + CARD.d / 2 + 0.006));
-    return project(new THREE.Vector3(h.x - side, TABLE_Y + 0.01, h.z));
+    return project(new THREE.Vector3(h.x + (h.step * Math.max(0, hands.opp.length - 1)) / 2, TABLE_Y + 0.01, h.z + CARD.d / 2 + 0.006));
   };
-  const pileScreen = (k) => project(piles[k].anchor.position.clone().add(new THREE.Vector3(0, 0.1, 0)));
-  // over the shoe and the bell, and just in front of the middle of your hand
+  // a pile's count stands just over its top; the pot's hangs just in front of its spread
+  const pileScreen = (k) => {
+    const p = piles[k];
+    if (k === 'pot') return project(p.anchor.position.clone().add(new THREE.Vector3(0, 0, p.front + 0.008)));
+    return project(p.anchor.position.clone().add(new THREE.Vector3(0, p.height + 0.025, 0)));
+  };
+  // over the shoe and the bell
   const thingScreen = (name) =>
     name === 'shoe' ? project(shoe.position.clone().add(new THREE.Vector3(0, 0.12, 0))) :
-    name === 'bell' ? project(bell.position.clone().add(new THREE.Vector3(0, 0.08, 0))) :
-    // your hand: just past its far edge, so the tag stands over the cards, not on them
-    project(new THREE.Vector3(HANDS.you.x + HANDS.you.step * Math.max(0, hands.you.length - 1) * 0.5, TABLE_Y, HANDS.you.z - CARD.d / 2 - 0.01));
+    project(bell.position.clone().add(new THREE.Vector3(0, 0.08, 0)));
 
   return {
     deal,
@@ -307,7 +312,7 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
     document.querySelector('.hud').append(el);
     return el;
   };
-  const tags = { you: tag('handtag below hand you'), opp: tag('handtag after hand opp') };
+  const tags = { you: tag('handtag below hand you'), opp: tag('handtag under hand opp') };
   const counts = { you: tag('tokentag you'), opp: tag('tokentag opp'), pot: tag('tokentag pot') };
   stage.onFrame(function pin() {
     const floor = (document.querySelector('.bar')?.getBoundingClientRect().top ?? innerHeight) - 4;
@@ -324,7 +329,8 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
   });
 
   // What's on the table, as the room has played it out (not the latest view).
-  const t = { cards: { you: [], opp: [] }, stake: { you: 0, opp: 0 }, ante: 0, round: 0, stood: { you: false, opp: false }, shown: false };
+  const t = { cards: { you: [], opp: [] }, stake: { you: 0, opp: 0 }, bet: { you: 0, opp: 0 }, ante: 0, round: 0, stood: { you: false, opp: false }, shown: false };
+  let panelUp = false; // your betting moves are up, in one panel over your tokens (below)
   function showTags() {
     for (const w of ['you', 'opp']) {
       const cards = t.cards[w];
@@ -333,16 +339,18 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
       const known = cards.filter((c) => c && c !== '??');
       const tot = handTotal(known);
       const hidden = known.length < cards.length;
-      const n = tot.soft && tot.total < 21 ? tr('ui.blackjack.soft', { n: tot.total }) : tot.total;
-      const name = w === 'you' ? tr('ui.common.you') : (seat?.state.v && seat.state.names[seat.oppId()]) || OPP;
-      const tag = hidden ? tr('ui.blackjack.tagShown', { name, n }) : tot.total > 21 ? tr('ui.blackjack.tagBust', { name, n: tot.total }) : tr('ui.blackjack.tag', { name, n });
+      // just the total: where the tag sits says whose hand it is
+      const n = points(tot);
+      const tag = hidden ? tr('ui.blackjack.tagShown', { n }) : tot.total > 21 ? tr('ui.blackjack.tagBust', { n: tot.total }) : String(n);
       tags[w].textContent = t.stood[w] ? tr('ui.blackjack.tagStood', { tag }) : tag;
       tags[w].classList.toggle('bust', !hidden && tot.total > 21);
     }
     for (const w of ['you', 'opp', 'pot']) {
       const n = world.piles[w].amount;
-      counts[w].hidden = w === 'pot' && !n;
-      counts[w].textContent = w === 'pot' ? tr('ui.blackjack.pot', { n: tokens(n) }) : tokens(n);
+      // yours heads the move panel while that is up
+      counts[w].hidden = w === 'pot' ? !n : w === 'you' && panelUp;
+      // a seat's count says what it has bet this round, so a bet to answer is plain to see
+      counts[w].textContent = w === 'pot' ? tr('ui.blackjack.pot', { n: tokens(n) }) : t.bet[w] ? tr('ui.blackjack.betTag', { n: tokens(n), bet: tokens(t.bet[w]) }) : tokens(n);
     }
   }
 
@@ -380,6 +388,7 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
     t.round = v.round;
     t.ante = v.ante ?? 0;
     t.stake = { you: me.stake, opp: them.stake };
+    t.bet = { you: me.bet, opp: them.bet };
     t.stood = { you: me.stood, opp: them.stood };
     // after the last hand, a showdown's hands are in lastHand
     const reveal = v.phase === 'over' && v.lastHand?.round === v.round && v.lastHand.hands;
@@ -387,11 +396,7 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
       you: me.hand.slice(),
       opp: reveal ? reveal[them.id].slice() : them.hand.slice(),
     };
-    for (const w of ['you', 'opp'])
-      t.cards[w].forEach((c, i) => {
-        const doubled = (w === 'you' ? me : them).doubled && i === 2;
-        world.deal(w, c === '??' ? null : c, { instant: true, hole: w === 'you' && i === 1 && !reveal, sideways: doubled });
-      });
+    for (const w of ['you', 'opp']) t.cards[w].forEach((c, i) => world.deal(w, c === '??' ? null : c, { instant: true, hole: w === 'you' && i === 1 && !reveal }));
     showTags();
   }
 
@@ -440,14 +445,24 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
         log(tr('ui.blackjack.standLog', { name: name(e.seat) }));
         showTags();
         break;
-      case 'double': {
-        toast(tr('ui.blackjack.doubleToast', { name: name(e.seat), amount: tokens(e.amount) }), 1400);
+      case 'street':
+        t.bet = { you: 0, opp: 0 };
+        showTags();
+        toast(tr(e.street === 'draw' ? 'ui.blackjack.drawToast' : 'ui.blackjack.lastToast'), 1400);
+        break;
+      case 'check':
+        await world.ringBell();
+        log(tr('ui.blackjack.checkLog', { name: name(e.seat) }));
+        break;
+      case 'bet':
+      case 'raise':
+      case 'allin': {
+        const line = tr(`ui.blackjack.${e.type}Log`, { name: name(e.seat), amount: tokens(e.type === 'raise' ? e.to : e.amount) });
+        if (w === 'opp') toast(line, 1600);
         await world.fly(w, 'pot', e.amount);
         t.stake[w] += e.amount;
-        t.cards[w].push(e.card);
-        await world.deal(w, e.card, { sideways: true });
-        t.stood[w] = true;
-        log(tr('ui.blackjack.doubleLog', { name: name(e.seat), rank: e.card.slice(0, -1) }));
+        t.bet[w] += e.amount;
+        log(line);
         showTags();
         break;
       }
@@ -490,6 +505,7 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
         world.piles.opp.set(e.stacks[oppId]);
         world.piles.pot.set(0);
         t.stake = { you: 0, opp: 0 };
+        t.bet = { you: 0, opp: 0 };
         showTags();
         await seat.wait(1800);
         break;
@@ -513,54 +529,66 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
     }
   }
 
-  // ---- your moves, on the table: the shoe to hit, the bell to stand, your tokens to
-  // double (or call one), your cards to fold. Each open one carries a tag with its key. ----
+  // ---- your moves, on the table: the shoe to hit, the bell to stand or check, your
+  // tokens to bet, raise, call or go all in, your cards to fold. On the draw street the
+  // shoe and the bell each carry a tag with its key; on a betting street every move is a
+  // row in one panel over your tokens, headed by their count. ----
   const can = (a) => seat.yourTurn() && seat.state.v.legal.includes(a);
   const act = (action) => {
     if (!can(action)) return;
-    acts.hide();
+    hideMoves();
     stage.setHover(null);
     seat.act({ action });
   };
   const acts = sceneActs(stage, act);
-  const LABEL = {
-    hit: () => tr('ui.blackjack.hit'),
-    stand: () => tr('ui.blackjack.stand'),
-    double: () => tr('ui.blackjack.double', { ante: tokens(seat.state.v.ante) }),
-    call: () => tr('ui.blackjack.call', { ante: tokens(seat.state.v.ante) }),
-    fold: () => tr('ui.blackjack.fold'),
-  };
-  const KEY = { hit: 'H', stand: 'S', double: 'D', call: 'C', fold: 'F' };
-  const AT = {
-    hit: () => world.thingScreen('shoe'),
-    stand: () => world.thingScreen('bell'),
-    double: () => world.pileScreen('you'),
-    call: () => world.pileScreen('you'),
-    fold: () => world.thingScreen('hand'),
-  };
-  function showMoves(v) {
-    if (!seat.yourTurn() || !v.legal.length) return acts.hide();
-    // above your tokens' count tag, not on it
-    const over = counts.you.offsetHeight + 8;
-    acts.show(v.legal.map((a) => ({ id: a, key: KEY[a], label: LABEL[a](), at: AT[a], dy: a === 'double' || a === 'call' ? over : 0 })));
+  function hideMoves() {
+    acts.hide();
+    if (!panelUp) return;
+    panelUp = false;
+    counts.you.hidden = false;
   }
+  // the moves made with your tokens
+  const CHIPS = ['call', 'bet', 'raise', 'allin'];
+  // the panel's rows, biggest first, then the ones that put nothing in
+  const ROWS = ['allin', 'raise', 'bet', 'call', 'check', 'fold'];
+  // What each of them puts in, from the view's price.
+  const puts = (a) => {
+    const p = seat.state.v.price;
+    return tokens({ call: p.call, bet: p.pot, raise: p.call + p.pot, allin: p.allin }[a]);
+  };
+  const label = (a) => tr(`ui.blackjack.${a}`, CHIPS.includes(a) ? { n: puts(a) } : {});
+  const tip = (a) => ({ title: label(a), text: tr(`ui.blackjack.tips.${a}`) });
+  const KEY = { hit: 'H', stand: 'S', check: 'K', bet: 'B', raise: 'R', call: 'C', fold: 'F', allin: 'A' };
+  const AT = { hit: () => world.thingScreen('shoe'), stand: () => world.thingScreen('bell') };
+  function showMoves(v) {
+    if (!seat.yourTurn() || !v.legal.length) return hideMoves();
+    if (v.legal.some((a) => a === 'hit' || a === 'stand')) {
+      hideMoves();
+      return acts.show(v.legal.map((a) => ({ id: a, key: KEY[a], label: label(a), at: AT[a] })));
+    }
+    // the panel stands where your count did, slid left off the pot's count
+    const head = counts.you.textContent;
+    panelUp = true;
+    counts.you.hidden = true;
+    const pot = () => (counts.pot.hidden ? [] : [counts.pot.getBoundingClientRect()]);
+    const rows = ROWS.filter((a) => v.legal.includes(a)).map((a) => ({ id: a, key: KEY[a], label: label(a) }));
+    acts.show([{ id: 'moves', head, rows, at: () => world.pileScreen('you'), avoid: pot }]);
+  }
+  // your tokens: the pot bet (or raise) if there is one, else a call
+  const chipMove = () => ['raise', 'bet', 'call', 'allin'].find(can);
   hud.interact(
     (thing) => {
-      if (thing === 'shoe') return can('hit') ? { title: tr('ui.blackjack.hit'), text: tr('ui.blackjack.tips.hit') } : null;
-      if (thing === 'bell') return can('stand') ? { title: tr('ui.blackjack.stand'), text: tr('ui.blackjack.tips.stand') } : null;
-      if (thing === 'stack') {
-        if (can('call')) return { title: tr('ui.blackjack.call', { ante: tokens(seat.state.v.ante) }), text: tr('ui.blackjack.tips.call') };
-        if (can('double')) return { title: tr('ui.blackjack.double', { ante: tokens(seat.state.v.ante) }), text: tr('ui.blackjack.tips.double') };
-        return null;
-      }
+      if (thing === 'shoe') return can('hit') ? tip('hit') : null;
+      if (thing === 'bell') return can('stand') ? tip('stand') : can('check') ? tip('check') : null;
+      if (thing === 'stack') return chipMove() ? tip(chipMove()) : null;
       if (thing === 'card:you:1') return { title: tr('ui.blackjack.tips.holeTitle'), text: tr('ui.blackjack.tips.hole'), color: HOLE };
-      if (thing.startsWith('card:you') && can('fold')) return { title: tr('ui.blackjack.fold'), text: tr('ui.blackjack.tips.fold') };
+      if (thing.startsWith('card:you') && can('fold')) return tip('fold');
       return null;
     },
     (thing) => {
       if (thing === 'shoe') act('hit');
-      else if (thing === 'bell') act('stand');
-      else if (thing === 'stack') act(can('call') ? 'call' : 'double');
+      else if (thing === 'bell') act(can('check') ? 'check' : 'stand');
+      else if (thing === 'stack' && chipMove()) act(chipMove());
       else if (thing.startsWith('card:you')) act('fold');
     },
   );
@@ -586,28 +614,26 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
         what: tr('ui.blackjack.sealed'),
         title: reason === 'quit' ? tr('ui.blackjack.titleQuit', { round: v.round, what: v.log.findLast((e) => e.type === 'quit')?.seat === v.you ? tr('ui.blackjack.youQuit') : tr('ui.blackjack.theyLeft', { name: them }) }) : reason === 'broke' ? tr('ui.blackjack.titleBroke', { round: v.round }) : tr('ui.blackjack.titleDone', { rounds: v.rounds }),
         big: outcome === 'draw' ? (reason === 'quit' ? tr('ui.blackjack.gameOver') : tr('ui.blackjack.draw')) : outcome === 'won' ? tr('ui.blackjack.youWon') : tr('ui.blackjack.theyWon', { name: them }),
-        sub: tr('ui.blackjack.sub', { you: tr('ui.common.you'), mine: tokens(mine), name: them, theirs: tokens(theirs) }),
         rows: [[tr('ui.common.you'), tokens(mine)], [them, tokens(theirs)]],
       });
       return;
     }
     const head = tr('ui.blackjack.head', { round: v.round, rounds: v.rounds });
-    hud.standing(head, [[tr('ui.common.you'), tokens(v.seats.find((s) => s.id === v.you).stack)], [them, tokens(v.seats.find((s) => s.id === oppId).stack)]]);
-    if (v.facing === v.you) status(tr('ui.blackjack.facing', { head, name: them, ante: tokens(v.ante) }), 'you');
+    // the status line says which street the hand is on, all the way through it
+    const STREET = { bet1: 'streetBet1', draw: 'streetDraw', bet2: 'streetBet2' };
+    const where = v.street ? `${head} · ${tr(`ui.blackjack.${STREET[v.street]}`)}` : head;
+    if (v.facing === v.you) status(tr('ui.blackjack.facing', { head: where, n: tokens(v.price.call) }), 'you');
     else if (v.turn === v.you) {
-      const tot = handTotal(v.seats.find((s) => s.id === v.you).hand).total;
-      status(tr('ui.blackjack.yourTurn', { head, n: tot }), 'you');
-    } else status(tr('ui.blackjack.thinking', { head, name: them }), 'opp');
+      const tot = handTotal(v.seats.find((s) => s.id === v.you).hand);
+      status(tr('ui.blackjack.yourTurn', { head: where, n: points(tot) }), 'you');
+    } else status(tr('ui.blackjack.thinking', { head: where, name: them }), 'opp');
   }
 
   seat = joinTable({ table, k, hud, opp, sync, play, settle, director: !!director });
-  stage.onDispose(() => {
-    seat.close();
-    hud.standing(null);
-  });
+  stage.onDispose(() => seat.close());
   // A director's script stands in for the server. Your move is made as a hand makes it:
   // the thing that does it lit under the pointer for a moment, then the move.
-  const THING = { hit: 'shoe', stand: 'bell', double: 'stack', call: 'stack', fold: 'card:you:0' };
+  const THING = { hit: 'shoe', stand: 'bell', check: 'bell', bet: 'stack', raise: 'stack', call: 'stack', allin: 'stack', fold: 'card:you:0' };
   if (director)
     import('./director/index.js').then((d) =>
       d.run(director, {
@@ -624,7 +650,7 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
           if (m.who !== 'you' || m.press === 0) return;
           stage.setHover(THING[m.act]);
           await seat.wait(m.press ?? 450);
-          acts.hide();
+          hideMoves();
           stage.setHover(null);
         },
       }),

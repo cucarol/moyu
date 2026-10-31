@@ -11,16 +11,16 @@ const roundTrip = (t) => Table.fromJSON(JSON.parse(JSON.stringify(t)));
 
 const newTable = (opts = {}) => new Table({ game: 'blackjack', ...opts });
 
-// One hit each, so a hand is under way.
+// Both check the first bets, so the draw is under way.
 function toMidHand(t) {
   for (let i = 0; i < 2; i++) step(t);
 }
 
-// One move for whoever is owed one: call a double, or hit below 17.
+// One move for whoever is owed one: on the draw hit below 17, on a betting round call or check.
 function step(t) {
   const id = t.game.waitingOn()[0];
   const seat = t.seats.find((s) => s.id === id);
-  if (t.game.facing === id) return t.act(seat, { action: 'call' });
+  if (t.game.street !== 'draw') return t.act(seat, { action: t.game.facing === id ? 'call' : 'check' });
   return t.act(seat, { action: handTotal(t.game.seat(id).hand).total < 17 ? 'hit' : 'stand' });
 }
 
@@ -51,14 +51,14 @@ test('a table restored mid-hand shows the same views and deals the same next car
 test('restored told cursors: no duplicate prompt, nothing missed', () => {
   const t = newTable();
   const [human, agent] = t.seats;
-  if (t.game.turn === 'human') t.act(human, { action: 'hit' });
+  if (t.game.turn === 'human') t.act(human, { action: 'check' });
   assert.match(t.agentUpdate(agent), /Your move/); // told on connect, before the restart
   const r1 = roundTrip(t);
   assert.equal(r1.agentUpdate(r1.seats[1]), null, 'a prompt already told is not told again');
 
   // While the agent is away it acts, then the human acts and chats: all of it is owed after the restart.
-  t.act(agent, { action: 'hit' });
-  t.act(human, { action: 'hit' });
+  t.act(agent, { action: 'check' });
+  t.act(human, { action: t.game.street === 'draw' ? 'hit' : 'check' });
   t.say(human, 'your turn');
   const r2 = roundTrip(t);
   const owed = r2.agentUpdate(r2.seats[1]);
@@ -70,11 +70,11 @@ test('restored told cursors: no duplicate prompt, nothing missed', () => {
 test('agent-facing commands name the table', () => {
   const t = newTable();
   const [human, agent] = t.seats;
-  if (t.game.turn === 'human') t.act(human, { action: 'stand' });
-  assert.ok(t.agentUpdate(agent).includes(`moyu hit | stand | double --table ${t.id} [--say "..."]`));
-  t.act(agent, { action: 'hit' });
-  if (t.game.turn === 'human') t.act(human, { action: 'stand' }); // the agent went first
-  assert.match(t.prompt('agent'), new RegExp(`^Your move: moyu hit \\| stand( \\| double)? --table ${t.id} \\[--say "\\.\\.\\."\\]$`));
+  if (t.game.turn === 'human') t.act(human, { action: 'check' });
+  assert.ok(t.agentUpdate(agent).includes(`moyu check | bet | allin --table ${t.id} [--say "..."]`));
+  t.act(agent, { action: 'check' });
+  if (t.game.turn === 'human') t.act(human, { action: t.game.street === 'draw' ? 'stand' : 'check' }); // to the draw, the agent's turn
+  assert.match(t.prompt('agent'), new RegExp(`^Your move: moyu hit \\| stand --table ${t.id} \\[--say "\\.\\.\\."\\]$`));
   const end = t.act(agent, { action: 'quit' });
   assert.ok(end.text.includes(`Verify: moyu verify --table ${t.id}`));
 });

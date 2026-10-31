@@ -584,22 +584,17 @@ export function mount(stage, { scene, createHud, table, k, director } = {}) {
         what: tr('ui.yacht.sealed'),
         title: quit ? (v.log.findLast((e) => e.type === 'quit')?.seat === v.you ? tr('ui.yacht.youQuit') : tr('ui.yacht.theyLeft', { name: them })) : tr('ui.yacht.titleDone'),
         big: outcome === 'draw' ? (quit ? tr('ui.yacht.gameOver') : tr('ui.yacht.draw')) : outcome === 'won' ? tr('ui.yacht.youWon') : tr('ui.yacht.theyWon', { name: them }),
-        sub: tr('ui.yacht.sub', { you: tr('ui.common.you'), mine: you, name: them, theirs }),
         rows: [[tr('ui.common.you'), tr('ui.yacht.points', { n: you })], [them, tr('ui.yacht.points', { n: theirs })]],
       });
       return;
     }
     const head = tr('ui.yacht.head', { round: roundNo });
-    hud.standing(head, [[tr('ui.common.you'), totalOf(sheets.you)], [them, totalOf(sheets.opp)]]);
     if (mine) status(tr('ui.yacht.yourTurn', { head, what: v.rollsLeft ? tr('ui.yacht.rollsLeft', { n: v.rollsLeft }) : tr('ui.yacht.scoreNow') }), 'you');
     else status(tr('ui.yacht.thinking', { head, name: them }), 'opp');
   }
 
   seat = joinTable({ table, k, hud, opp, sync, play, settle, director: !!director });
-  stage.onDispose(() => {
-    seat.close();
-    hud.standing(null);
-  });
+  stage.onDispose(() => seat.close());
   // A director's script stands in for the server. Your move is made as a hand makes it:
   // the dice to keep tapped one by one, then the cup (or the box to score in).
   if (director)

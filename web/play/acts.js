@@ -4,7 +4,9 @@
 //
 // item: { id, key?, label, at: () => ({ x, y }) on screen, cls?, dy? (pixels up from at),
 // under? (hangs below at instead, with cls 'under'), avoid? () => screen rects it slides
-// left off, like Yacht's dice tray }; one without a key is a note pinned there, not a move
+// left off, like Yacht's dice tray }; one without a key is a note pinned there, not a move.
+// A panel gathers several moves under one border: { id, at, head?, rows: [{ id, key, label }] },
+// head a plain first line (like 21's token count), then one row per move.
 
 export function sceneActs(stage, act) {
   const box = document.createElement('div');
@@ -44,7 +46,7 @@ export function sceneActs(stage, act) {
     'keydown',
     (e) => {
       if (!items.length || typing() || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-      const it = items.find((x) => x.key && x.key.toLowerCase() === e.key.toLowerCase());
+      const it = items.flatMap((x) => x.rows ?? [x]).find((x) => x.key && x.key.toLowerCase() === e.key.toLowerCase());
       if (!it) return;
       e.preventDefault();
       act(it.id);
@@ -57,9 +59,9 @@ export function sceneActs(stage, act) {
     items = list;
     tags.clear();
     box.replaceChildren();
-    for (const it of list) {
+    const button = (it, cls) => {
       const b = document.createElement(it.key ? 'button' : 'div');
-      b.className = `act-tag ${it.key ? '' : 'note '}${it.cls ?? it.id}`;
+      b.className = `${cls} ${it.key ? '' : 'note '}${it.cls ?? it.id}`;
       if (it.key) {
         const k = document.createElement('span');
         k.className = 'key';
@@ -68,6 +70,21 @@ export function sceneActs(stage, act) {
       }
       b.append(it.label);
       if (it.key) b.onclick = () => act(it.id);
+      return b;
+    };
+    for (const it of list) {
+      let b;
+      if (it.rows) {
+        b = document.createElement('div');
+        b.className = `act-panel ${it.cls ?? it.id}`;
+        if (it.head) {
+          const h = document.createElement('div');
+          h.className = 'act-head';
+          h.textContent = it.head;
+          b.append(h);
+        }
+        for (const r of it.rows) b.append(button(r, 'act-row'));
+      } else b = button(it, 'act-tag');
       tags.set(it.id, b);
       box.append(b);
     }

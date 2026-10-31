@@ -53,13 +53,13 @@ test('a game the human starts wakes the agent, and the agent socket outlives it'
 });
 
 test('chat with no game on wakes the agent, and waits for it when it is not listening', () => {
-  const { room } = newRoom({ humanName: 'C' });
+  const { room } = newRoom();
   room.say(room.human, 'still there?');
   assert.equal(room.told.chat, 0); // nobody listening: still owed
 
   const agent = listen(room, 'agent');
   room.wake(); // what a re-armed listener gets on connect
-  assert.match(agent.got[0], /C says: still there\?\n\nNo game on\. Reply with: moyu say/);
+  assert.match(agent.got[0], /Human says: still there\?\n\nNo game on\. Reply with: moyu say/);
   room.wake();
   assert.equal(agent.got.length, 1); // told once
 
@@ -126,7 +126,7 @@ test('a game can be ended or swapped mid-way: it finishes as a quit and still ve
 });
 
 test('the room keeps a quiet history: the agent hears its record when a game opens, the page sees none of it', () => {
-  const { room } = newRoom({ humanName: 'Mei' });
+  const { room } = newRoom();
   const agent = listen(room, 'agent');
   const human = listen(room, 'human');
   room.setScene('machine', room.human);
@@ -148,7 +148,7 @@ test('the room keeps a quiet history: the agent hears its record when a game ope
   room.start(room.human, 'roulette', { replace: true });
   const opened = agent.got.slice(before).join('\n');
   assert.equal(room.history.length, 1);
-  assert.match(opened, /Your Roulette record with Mei here: Mei \d, you \d/);
+  assert.match(opened, /Your Roulette record with Human here: Human \d, you \d/);
   assert.match(opened, /Last time: /);
   assert.match(opened, /Only you see this/);
   assert.ok(!human.got.some((x) => x.includes('record with')));
@@ -159,22 +159,20 @@ test('the room keeps a quiet history: the agent hears its record when a game ope
 });
 
 test('the human renames the agent: the room keeps the name, a game on takes it, and the agent hears it', () => {
-  const { room } = newRoom({ agentName: 'Claude', humanName: 'C' });
+  const { room } = newRoom({ agentName: 'Claude' });
   const agent = listen(room, 'agent');
   assert.match(room.rename(room.agent, 'agent', 'X').error, /only the human/);
   assert.match(room.rename(room.human, 'agent', '').error, /1 to 24/);
   assert.ok(room.rename(room.human, 'agent', '小克').ok);
   assert.equal(room.agent.name, '小克');
   assert.deepEqual(room.chat.at(-1).rename, { who: 'agent', from: 'Claude', to: '小克' });
-  assert.match(agent.got.at(-1), /C renamed you to 小克\./);
+  assert.match(agent.got.at(-1), /Human renamed you to 小克\./);
 
   room.start(room.human, 'blackjack');
   assert.equal(room.table.seats.find((s) => s.id === 'agent').name, '小克');
-  assert.ok(room.rename(room.human, 'human', 'Mei').ok);
-  assert.equal(room.table.seats.find((s) => s.id === 'human').name, 'Mei');
-  assert.equal(room.human.name, 'Mei');
-  assert.ok(room.table.chat.at(-1).rename);
-  assert.match(agent.got.at(-1), /C renamed C to Mei\./);
+  // The human's seat has no name to change.
+  assert.match(room.rename(room.human, 'human', 'Mei').error, /only the agent/);
+  assert.equal(room.human.name, 'Human');
 });
 
 test("the agent's text names roulette items the way the human's page does", () => {

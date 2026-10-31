@@ -153,6 +153,7 @@ button, input { font: inherit; color: inherit; }
 }
 .handtag.after { transform: translate(0, -50%); }
 .handtag.below { transform: translate(0, 2px); }
+.handtag.under { transform: translate(-50%, 2px); }
 
 /* hover hint next to the thing under the cursor */
 .tip {
@@ -375,10 +376,11 @@ body[data-game='roulette'] .brand { text-shadow: 0 0 8px #7dffc855, 2px 2px 0 #0
 .match-name { margin-right: calc(var(--px) * 2); color: var(--muted); }
 .match .win { width: calc(var(--px) * 6); height: calc(var(--px) * 6); }
 .brand .match span { font-size: inherit; margin-left: 0; vertical-align: baseline; }
+/* the brand is only as wide as the space left of the status bar: the standing wraps there, a seat at a time */
+.brand .match { flex-wrap: wrap; row-gap: 2px; }
+.brand .match > span { white-space: nowrap; }
 .brand .match .match-round { color: var(--lamp); }
 .brand .match .match-name { color: var(--muted); }
-.brand .match .match-count { color: var(--ink); }
-.match-count { color: var(--ink); }
 .tagline { margin-top: 4px; font-size: var(--t-small, 12px); color: var(--muted); text-shadow: 1px 1px 0 #000; opacity: 0.85; }
 .tagline[hidden] { display: none; }
 .match[hidden] { display: none; }
@@ -639,7 +641,8 @@ body[data-game='roulette'] .choice .put-down:hover { color: var(--ink); }
 }
 
 /* ---- the ending ---- */
-.result { width: min(600px, 92vw); }
+/* as wide as 25 characters of its type, so a big screen's bigger type doesn't wrap mid-line */
+.result { width: min(calc(var(--t, 24px) * 25), 92vw); }
 .result > :not(.window-title) { margin-left: 20px; margin-right: 20px; }
 .result-big { margin-top: 16px; font-size: var(--t-big, 48px); text-shadow: 3px 3px 0 #000; }
 .result.won .result-big { color: var(--lamp); text-shadow: 0 0 14px #7dffc877, 3px 3px 0 #000; }
@@ -659,7 +662,8 @@ body:is([data-game='roulette'], [data-game='blackjack'], [data-game='yacht']) .r
 .seal-check.ok { color: var(--lamp); }
 .seal-check.bad { color: #ff6b75; }
 .result-again { margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.result-again .key { padding: 0 10px; background: var(--lamp); color: #021a12; }
+/* on a plain table it is only a word on how to play again, not a control */
+.result-again.hint { display: block; color: var(--muted); }
 .result-actions { display: flex; justify-content: flex-end; margin-top: 14px; margin-bottom: 16px; }
 
 /* the later games' ending: a name and a value per seat */
@@ -681,7 +685,7 @@ body[data-scene='raft'][data-game] {
   --felt: #8af0b8;
   background: #1e2440;
 }
-body[data-scene='raft'][data-game] :is(.pill, .pixbtn, .say, .emote, .tip, .handtag, .tokentag) {
+body[data-scene='raft'][data-game] :is(.pill, .pixbtn, .say, .emote, .tip, .handtag, .tokentag, .act-panel) {
   box-shadow: inset 0 0 0 var(--px) var(--rule), 0 calc(var(--px) * 2) 0 0 #0e1430;
 }
 body[data-scene='raft'][data-game] :is(.pill, .say) { border-top-color: #f4dc90; }
@@ -689,7 +693,7 @@ body[data-scene='raft'][data-game] .brand { color: #f0c860; text-shadow: 2px 2px
 body[data-scene='raft'][data-game] .brand span, body[data-scene='raft'][data-game] .seal { color: var(--ink); text-shadow: 2px 2px 0 #101a3a; }
 body[data-scene='raft'][data-game] .pill.yours { background: #2c3e6a; }
 body[data-scene='raft'][data-game] .pill.theirs .dot { background: var(--neon); }
-body[data-scene='raft'][data-game] :is(.pixbtn, .act-tag):hover { background: #34508a; }
+body[data-scene='raft'][data-game] :is(.pixbtn, .act-tag, .act-row):hover { background: #34508a; }
 body[data-scene='raft'][data-game] .log li { text-shadow: 2px 2px 0 #0e1430, -1px 0 0 #0e1430; }
 body[data-scene='raft'][data-game] .log li.sys { color: #e8e4f0; }
 body[data-scene='raft'][data-game] .log li.mine .who { color: var(--felt); }
@@ -714,7 +718,8 @@ body[data-scene='raft'][data-game] .window-title { color: #1a2448; }
   white-space: nowrap;
 }
 .tokentag.opp { border-color: var(--edge); color: var(--ink); }
-.tokentag.pot { border-color: var(--neon); color: #ffd0ec; }
+/* the pot's hangs in front of its spread, not over it */
+.tokentag.pot { border-color: var(--neon); color: #ffd0ec; transform: translate(-50%, 0); }
 
 /* your moves, pinned over the things on the table that make them, a key on each */
 .acts { position: absolute; inset: 0; pointer-events: none; }
@@ -738,13 +743,43 @@ body[data-scene='raft'][data-game] .window-title { color: #1a2448; }
 }
 .act-tag:hover { background: #3a1018; color: #fff; }
 .act-tag .key { min-width: 1.3em; padding: 0 .25em; line-height: 1.2; text-align: center; box-shadow: inset 0 0 0 var(--px) currentColor; }
-.act-tag.double, .act-tag.call { border-color: var(--neon); color: #ffd0ec; }
+/* 21's moves with your tokens */
+.act-tag:is(.bet, .raise, .call, .allin) { border-color: var(--neon); color: #ffd0ec; }
 .act-tag.fold { border-color: var(--edge); color: var(--ink); }
-/* their double: the one choice on the table, so bigger */
-.act-tag:is(.call, .fold) { padding: 4px 14px 4px 6px; font-size: max(var(--t, 24px), var(--t-tag, 24px)); }
 .act-tag.note { padding: 2px 10px; border-color: var(--edge); color: var(--ink); cursor: default; pointer-events: none; }
 /* a tag that hangs below its thing, like Yacht's under the cup, off the tray */
 .act-tag.under { translate: -50% 0; }
+/* several moves under one border (21's betting moves over your tokens): a plain head, then a
+   row per move */
+.act-panel {
+  position: absolute;
+  translate: -50% -100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+  background: var(--panel-solid);
+  border: var(--px) solid var(--lamp);
+  font-size: var(--t-tag, 24px);
+  white-space: nowrap;
+  pointer-events: auto;
+  animation: act-in .15s steps(3);
+}
+.act-head { padding: 0 8px 2px; margin-bottom: 2px; color: var(--lamp); border-bottom: var(--px) solid var(--rule, var(--edge)); }
+.act-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 10px 1px 4px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.act-row:hover { background: #3a1018; color: #fff; }
+.act-row .key { min-width: 1.3em; padding: 0 .25em; line-height: 1.2; text-align: center; box-shadow: inset 0 0 0 var(--px) currentColor; }
+.act-row:is(.bet, .raise, .call, .allin) { color: #ffd0ec; }
 @keyframes act-in { from { transform: translateY(6px); opacity: 0; } }
 
 /* Yacht: the score pad, a sheet of paper pinned to the left */

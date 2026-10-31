@@ -10,7 +10,6 @@ const SAY = str("Optional: one short line to the user on the table chat, in the 
 const MOOD = str('Optional: how your avatar looks right now.', { enum: MOODS });
 const MOVE = { table: TABLE, say: SAY, mood: MOOD };
 const NAME = str('Your name at the table; leave it out: you sit as Clawd, or as the name the user gave you.');
-const HUMAN = str("The user's name, if you know it.");
 const RULES = str('Roulette only: bo3 (default, best of three rounds) or short (one round played like round 3: 4 额度, 断线 at 1).', { enum: ['bo3', 'short'] });
 
 // Each spec: params as JSON Schema properties, the required ones, and how the tool's
@@ -19,14 +18,14 @@ const SPECS = [
   {
     name: 'moyu_new',
     description: 'Open a moyu table and play a quick game with the user: roulette (轮盘, the default), blackjack (21 点) or yacht (快艇骰子). Returns the table id, the link to give the user, and the opening board. The plugin then wakes you with a [moyu <table id>] message on every table event, so end your turn to wait.',
-    params: { game: str('roulette, blackjack or yacht', { enum: ['roulette', 'blackjack', 'yacht'] }), rules: RULES, name: NAME, human: HUMAN },
-    command: (a) => ['new', [], { game: a.game, rules: a.rules, name: a.name, human: a.human }],
+    params: { game: str('roulette, blackjack or yacht', { enum: ['roulette', 'blackjack', 'yacht'] }), rules: RULES, name: NAME },
+    command: (a) => ['new', [], { game: a.game, rules: a.rules, name: a.name }],
   },
   {
     name: 'moyu_room',
     description: 'Open a moyu room: one link the user can keep open, start games from and chat in. Reopens the room you last opened unless new is true. The plugin wakes you with [moyu room <id>] messages.',
-    params: { scene: str('raft (21 and yacht) or machine (roulette)', { enum: ['raft', 'machine'] }), name: NAME, human: HUMAN, new: { type: 'boolean', description: 'Open a fresh room instead of the last one.' } },
-    command: (a) => ['room', [], { scene: a.scene, name: a.name, human: a.human, new: a.new === true || undefined }],
+    params: { scene: str('raft (21 and yacht) or machine (roulette)', { enum: ['raft', 'machine'] }), name: NAME, new: { type: 'boolean', description: 'Open a fresh room instead of the last one.' } },
+    command: (a) => ['room', [], { scene: a.scene, name: a.name, new: a.new === true || undefined }],
   },
   {
     name: 'moyu_start',
@@ -68,9 +67,9 @@ const SPECS = [
     required: ['target'],
     command: (a) => ['shoot', [a.target], { table: a.table, say: a.say, mood: a.mood }],
   },
-  ...['hit', 'stand', 'double', 'call', 'fold'].map((verb) => ({
+  ...['check', 'bet', 'raise', 'call', 'fold', 'allin', 'hit', 'stand'].map((verb) => ({
     name: `moyu_${verb}`,
-    description: `Blackjack: ${verb} (\`moyu ${verb}\`).${verb === 'double' ? ' First decision only.' : verb === 'call' || verb === 'fold' ? ' When the user doubled.' : ''}`,
+    description: `Blackjack: ${verb} (\`moyu ${verb}\`).${['hit', 'stand'].includes(verb) ? ' On the draw.' : ' On a betting round; the prompt says what it puts in.'}`,
     params: MOVE,
     command: (a) => [verb, [], { table: a.table, say: a.say, mood: a.mood }],
   })),

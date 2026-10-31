@@ -1,5 +1,5 @@
-// A sample 21 game: two hands on the raft. The agent doubles on 11 and you call; then
-// you stand on 19 and it hits into a bust. Along the way: a canvas drawn every frame on the
+// A sample 21 game: two hands on the raft. The agent bets the pot on 11 and you call; it
+// draws to 21 against your 20 and takes it. Then you stand on 19 and it hits into a bust. Along the way: a canvas drawn every frame on the
 // laptop's screen, a camera path through the cards into that screen, the agent's think pose,
 // and a scene hook of the script's own (a warm light over the felt) eased up and down.
 // docs/director.md has the format.
@@ -48,15 +48,21 @@ export default {
     },
   },
   beats: [
-    { say: { 'zh-CN': '这把我加倍。', en: "I'll double this one." }, mood: 'smug', after: 600 },
-    { who: 'opp', act: 'double' },
+    { say: { 'zh-CN': '这把我押一个底池。', en: 'Pot. Your move.' }, mood: 'smug', after: 600 },
+    { who: 'opp', act: 'bet' },
     { scene: 'glow', tween: [0, 5], ms: 1200, ease: 'sine', alongside: true },
     { who: 'you', act: 'call' },
+    { who: 'opp', act: 'hit' },
     { who: 'you', act: 'hit' },
+    { who: 'opp', act: 'stand' },
     { who: 'you', act: 'stand' },
+    { who: 'opp', act: 'bet', mood: 'smug' },
+    { who: 'you', act: 'call' },
     { scene: 'glow', tween: [5, 0], ms: 1500, ease: 'sine', alongside: true },
     { cam: 'cards', ms: 1600, ease: 'sine' },
     { cam: 'seat', ms: 1200, after: 800 },
+    { who: 'you', act: 'check' },
+    { who: 'opp', act: 'check' },
     { who: 'you', act: 'stand' },
     { avatar: 'thinkHand', after: 200 },
     // the odds go up on the laptop beside the felt (a stand-in until the raft has its own),
@@ -67,6 +73,8 @@ export default {
     { cam: 'seat', ms: 1600, ease: 'inOut' },
     { who: 'opp', act: 'hit', mood: 'nervous', hud: 'full' },
     { who: 'opp', act: 'stand' },
+    { who: 'you', act: 'check' },
+    { who: 'opp', act: 'check' },
     { say: '😭', after: 400 },
   ],
   tail: 2000,

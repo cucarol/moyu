@@ -68,6 +68,7 @@ export function createHud(stage, opp, { game, oppName = 'Clawd', nudge = t('ui.h
   }
 
   function log(text, who = null) {
+    if (!text) return;
     const li = document.createElement('li');
     if (who) {
       li.className = who === 'you' ? 'mine' : '';
@@ -323,29 +324,9 @@ export function createHud(stage, opp, { game, oppName = 'Clawd', nudge = t('ui.h
     const input = prefsBody.querySelector('.name-row input');
     if (input) input.placeholder = name;
   }
-  // ---- the game's standing under its name, in the same spot on every game: where the
-  // game is (hand, round), then each seat and its count. Roulette builds its own, with pips.
-  let standingEl;
-  function standing(where, seats) {
-    if (!standingEl) {
-      standingEl = document.createElement('div');
-      standingEl.className = 'match';
-      $('.brand').append(standingEl);
-    }
-    standingEl.hidden = !where;
-    if (!where) return;
-    const span = (cls, text) => Object.assign(document.createElement('span'), { className: cls, textContent: text });
-    standingEl.replaceChildren(
-      span('match-round', where),
-      ...seats.map(([who, n]) => {
-        const r = span('match-seat', '');
-        r.append(span('match-name', who), span('match-count', n));
-        return r;
-      }),
-    );
-  }
-  // A rename lands in the chat as { rename: { who, from, to } }: a small line of its own.
-  const renameLine = (r) => (r.who === 'agent' ? t('ui.chat.renamedAgent', { from: r.from, to: r.to }) : t('ui.chat.renamedYou', { to: r.to }));
+  // A rename of the agent lands in the chat as { rename: { who, from, to } }: a small line of
+  // its own. (Older games may hold one of the human's seat, from when it had a name: not shown.)
+  const renameLine = (r) => (r.who === 'agent' ? t('ui.chat.renamedAgent', { from: r.from, to: r.to }) : '');
 
   // ---- the rules: how each game is played. A ？ beside each game in the games window
   // opens it on that game, and closing it goes back to the games; ? opens it on the game
@@ -486,7 +467,6 @@ export function createHud(stage, opp, { game, oppName = 'Clawd', nudge = t('ui.h
     rulesButton,
     setOppName,
     renameLine,
-    standing,
     idle: (on) => (tagline.hidden = !on),
     tip: showTip,
     interact(t, a) {

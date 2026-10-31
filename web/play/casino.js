@@ -462,86 +462,243 @@ export function addGlints(stage, spots) {
 }
 
 // ---- tokens: the chips are what the two of you are spending ----
-// One colour per size, so a pile reads at a glance: gold 1M, blue 100k, red 10k, bone 1k.
+// One colour per size, so a pile reads at a glance: gold 1M, blue 100k, black 50k, red
+// 10k, bone 1k. Each has edge spots (across the table they show as a dashed rim) and a
+// pale inlay on top.
 export const DENOMS = [
-  { v: 1_000_000, face: '#e0b040', rim: '#7a5410', mark: '#fff2c0' },
-  { v: 100_000, face: '#2f5fb0', rim: '#efe3c6', mark: '#bcd4ff' },
-  { v: 10_000, face: '#b83038', rim: '#efe3c6', mark: '#ffc0c4' },
-  { v: 1_000, face: '#e8e0cc', rim: '#4a6a8a', mark: '#4a6a8a' },
+  { v: 1_000_000, face: '#d8a838', spot: '#fff2c0', inlay: '#f6e2a0', mark: '#8a5c10' },
+  { v: 100_000, face: '#2f5fb0', spot: '#efe3c6', inlay: '#d6e2ff', mark: '#2f5fb0' },
+  { v: 50_000, face: '#2a2a30', spot: '#efe3c6', inlay: '#e8e0cc', mark: '#2a2a30' },
+  { v: 10_000, face: '#b83038', spot: '#efe3c6', inlay: '#ffe2dc', mark: '#b83038' },
+  { v: 1_000, face: '#e8e0cc', spot: '#4a6a8a', inlay: '#fffaf0', mark: '#4a6a8a' },
 ];
 export const tokens = (n) => (n >= 1_000_000 ? `${+(n / 1_000_000).toFixed(2)}M` : n >= 1000 ? `${+(n / 1000).toFixed(1)}k` : String(n));
 
 const CHIP = { r: 0.024, h: 0.0075 };
-const chipGeo = new THREE.CylinderGeometry(CHIP.r, CHIP.r, CHIP.h, 12);
+const chipGeo = new THREE.CylinderGeometry(CHIP.r, CHIP.r, CHIP.h, 14);
 const chipMats = new Map();
 function chipMat(d) {
   if (chipMats.has(d.v)) return chipMats.get(d.v);
-  // the top: a ring of edge spots and a token mark (a little diamond) in the middle
-  const top = canvasTex(16, 16, (ctx) => {
-    ctx.fillStyle = d.rim;
-    ctx.fillRect(0, 0, 16, 16);
-    ctx.fillStyle = d.face;
-    ctx.fillRect(2, 2, 12, 12);
-    for (const [x, y] of [[7, 0], [7, 14], [0, 7], [14, 7]]) ctx.fillRect(x, y, 2, 2);
-    ctx.fillStyle = d.mark;
-    for (const [x, y, w] of [[7, 5, 2], [6, 6, 4], [5, 7, 6], [5, 8, 6], [6, 9, 4], [7, 10, 2]]) ctx.fillRect(x, y, w, 1);
+  const ring = new THREE.Color(d.face).multiplyScalar(0.62).getStyle();
+  // the top: the face with eight edge spots, a dark ring, the inlay and its little diamond
+  const top = canvasTex(24, 24, (ctx) => {
+    for (let y = 0; y < 24; y++)
+      for (let x = 0; x < 24; x++) {
+        const dx = x - 11.5;
+        const dy = y - 11.5;
+        const r = Math.hypot(dx, dy);
+        const k = Math.atan2(dy, dx) / (Math.PI / 4);
+        const spot = Math.abs(k - Math.round(k)) < 0.2;
+        ctx.fillStyle = r > 9.2 ? (spot && r < 11.8 ? d.spot : d.face) : r > 8.1 ? ring : Math.abs(dx) + Math.abs(dy) <= 3.5 ? d.mark : d.inlay;
+        ctx.fillRect(x, y, 1, 1);
+      }
   });
-  const side = canvasTex(16, 2, (ctx) => {
+  // the edge: seven spots round it
+  const side = canvasTex(28, 2, (ctx) => {
     ctx.fillStyle = d.face;
-    ctx.fillRect(0, 0, 16, 2);
-    ctx.fillStyle = d.rim;
-    for (let x = 0; x < 16; x += 4) ctx.fillRect(x, 0, 2, 2);
+    ctx.fillRect(0, 0, 28, 2);
+    ctx.fillStyle = d.spot;
+    for (let x = 1; x < 28; x += 4) ctx.fillRect(x, 0, 2, 2);
   });
   const m = [mat({ map: side }), mat({ map: top }), mat({ map: top })];
   chipMats.set(d.v, m);
   return m;
 }
 
-// [{ d, n }] largest first
+// [{ d, n }] largest first: chips as a player would hold them, not the fewest. A bigger
+// pile has more of each size; the odd thousands are bone.
 export function breakDown(amount) {
-  const out = [];
-  let left = amount;
-  for (const d of DENOMS) {
-    const n = Math.floor(left / d.v);
-    if (n) out.push({ d, n });
+  const [gold, blue, black, red, bone] = DENOMS;
+  const odd = amount % red.v;
+  let left = amount - odd;
+  const s = left / 1_000_000;
+  // about `want` chips of d, leaving what the next size up can make (a multiple of step)
+  const take = (d, want, step) => {
+    const per = step / d.v;
+    const must = (left % step) / d.v;
+    const most = must + per * Math.floor((left / d.v - must) / per);
+    const n = Math.min(most, must + per * Math.round(Math.max(0, want - must) / per));
     left -= n * d.v;
-  }
-  return out;
+    return n;
+  };
+  const reds = take(red, 5 + 5 * s, 50_000);
+  const blacks = take(black, 3 + 5 * s, 100_000);
+  let blues = left / blue.v;
+  const golds = blues > 16 ? Math.floor((blues - 6) / 10) : 0;
+  blues -= golds * 10;
+  const n = [golds, blues, blacks, reds, odd / bone.v];
+  return DENOMS.map((d, i) => ({ d, n: n[i] })).filter((b) => b.n > 0);
 }
 
-const COL = 10; // chips per column before a new one starts
-// A pile of chips worth `amount`: one column per size (more when tall), in a row along x.
-export function chipPile(amount, { spread = 0.054 } = {}) {
-  const g = new THREE.Group();
-  let col = 0;
-  for (const { d, n } of breakDown(amount)) {
-    for (let start = 0; start < n; start += COL) {
-      const x = col * spread;
-      for (let i = start; i < Math.min(n, start + COL); i++) {
-        const c = new THREE.Mesh(chipGeo, chipMat(d));
-        c.position.set(x + Math.sin(i * 2.1) * 0.002, CHIP.h / 2 + (i - start) * CHIP.h, Math.cos(i * 1.7) * 0.002);
-        c.castShadow = c.receiveShadow = true;
-        g.add(c);
-      }
-      col++;
+const UP = new THREE.Vector3(0, 1, 0);
+const SPACE = CHIP.r * 2 + 0.002; // between stack middles in a neat pile
+// a chip lying tipped: its axis leaned off upright by `a` toward the flat direction u
+const lean = (u, a) => new THREE.Quaternion().setFromUnitVectors(UP, new THREE.Vector3(u.x * Math.sin(a), Math.cos(a), u.z * Math.sin(a)));
+const flat = (ang) => new THREE.Vector3(Math.cos(ang), 0, Math.sin(ang));
+
+// The middles of a hex grid's cells, nearest first, n of them, front row first.
+function hexCells(n, r) {
+  const out = [];
+  for (let j = -6; j <= 6; j++)
+    for (let i = -6; i <= 6; i++) out.push(new THREE.Vector3((i + (j & 1) / 2) * SPACE, 0, j * SPACE * 0.87));
+  out.forEach((p) => (p.k = p.length() + r() * 0.012));
+  const cells = out.sort((a, b) => a.k - b.k).slice(0, n);
+  const mid = cells.reduce((m, p) => m.add(p), new THREE.Vector3()).divideScalar(Math.max(1, n));
+  return cells.map((p) => p.sub(mid)).sort((a, b) => b.z - a.z || a.x - b.x);
+}
+
+// A player's chips: neat stacks, one size to a stack, cut at uneven heights, the big
+// ones in front where they read and the many small ones behind; a stray or two lies flat
+// beside the pile or leans on a stack. inward: the way to the middle of the table, where
+// the strays go and the pile leans a little, so a pile near the rail stays on the felt.
+function neatChips(parts, r, strays, inward) {
+  const stacks = [];
+  for (const { d, n } of parts)
+    for (let left = n; left > 0; ) {
+      const h = Math.min(left, 5 + Math.floor(r() * 7));
+      stacks.push({ d, h });
+      left -= h;
     }
+  const total = parts.reduce((a, b) => a + b.n, 0);
+  const loose = [];
+  const want = strays && total >= 5 ? 1 + (total >= 22) + (r() < 0.4) : 0;
+  for (let k = 0; k < want; k++) {
+    const last = stacks.findLast((s) => s.h > 1);
+    if (!last) break;
+    last.h--;
+    loose.push(last.d);
   }
-  // centred on its anchor
-  for (const c of g.children) c.position.x -= ((col - 1) * spread) / 2;
-  g.userData.width = col * spread;
-  g.userData.height = Math.min(COL, Math.max(0, ...breakDown(amount).map((b) => b.n))) * CHIP.h;
+  const cells = hexCells(stacks.length, r);
+  const reach = Math.max(0, ...cells.map((p) => p.length()));
+  const shift = inward.clone().multiplyScalar(Math.min(0.035, reach * 0.45));
+  const chips = [];
+  stacks.forEach((s, i) => {
+    s.p = cells[i].add(shift).add(new THREE.Vector3((r() - 0.5) * 0.003, 0, (r() - 0.5) * 0.003));
+    for (let k = 0; k < s.h; k++) {
+      const p = s.p.clone().add(new THREE.Vector3((r() - 0.5) * 0.0024, CHIP.h / 2 + k * CHIP.h, (r() - 0.5) * 0.0024));
+      chips.push({ d: s.d, p, yaw: r() * 7 });
+    }
+  });
+  const toward = Math.atan2(inward.z, inward.x);
+  loose.forEach((d, k) => {
+    const u = flat(toward + (r() - 0.5) * 1.2 + (k ? (0.6 + r() * 0.4) * (r() < 0.5 ? 1 : -1) : 0));
+    const tall = stacks.filter((s) => s.h >= 6).sort((a, b) => b.p.dot(u) - a.p.dot(u))[0];
+    if (k === 1 && tall) {
+      // leaning on a stack's side, its foot on the felt
+      const a = 1.15;
+      const p = tall.p.clone().addScaledVector(u, CHIP.r + CHIP.r * Math.cos(a) + 0.001);
+      p.y = CHIP.r * Math.sin(a) + (CHIP.h / 2) * Math.cos(a);
+      chips.push({ d, p, yaw: r() * 7, lean: lean(u, a) });
+    } else {
+      const p = u.clone().multiplyScalar(reach + CHIP.r * 2 + 0.006 + r() * 0.01).add(shift);
+      p.y = CHIP.h / 2;
+      chips.push({ d, p, yaw: r() * 7 });
+    }
+  });
+  return { chips, height: Math.max(0, ...stacks.map((s) => s.h)) * CHIP.h };
+}
+
+// The pot: chips pushed in from both sides, short stacks and singles spread loose, a few
+// lying half across another. It keeps off its right, where folded hands go.
+function looseChips(parts, r) {
+  const bag = parts.flatMap(({ d, n }) => Array(n).fill(d));
+  const stacks = [];
+  for (let i = 0; i < bag.length; ) {
+    const h = Math.min(bag.length - i, 1 + Math.floor(r() * 4));
+    stacks.push(bag.slice(i, i + h));
+    i += h;
+  }
+  // stacks from different sizes mixed through the spread
+  for (let i = stacks.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [stacks[i], stacks[j]] = [stacks[j], stacks[i]];
+  }
+  const placed = [];
+  const chips = [];
+  let height = 0;
+  stacks.forEach((s, i) => {
+    const rad = 0.027 * Math.sqrt(i + 0.5) + (r() - 0.5) * 0.008;
+    const ang = i * 2.39996 + (r() - 0.5) * 0.4;
+    const p = new THREE.Vector3(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+    if (p.x > 0) p.x *= 0.4;
+    // resting half on an earlier stack: tipped away from it
+    const under = placed.filter((q) => q.p.distanceTo(p) < CHIP.r * 2 - 0.003).sort((a, b) => b.top - a.top)[0];
+    let base = 0;
+    let tip = null;
+    if (under) {
+      const u = p.clone().sub(under.p).setY(0).normalize();
+      const a = Math.min(0.5, Math.asin(Math.min(1, under.top / (CHIP.r * 2))));
+      base = under.top / 2;
+      tip = lean(u, a);
+    }
+    s.forEach((d, k) => {
+      const off = new THREE.Vector3((r() - 0.5) * 0.003, CHIP.h / 2 + k * CHIP.h, (r() - 0.5) * 0.003);
+      if (tip) off.applyQuaternion(tip);
+      chips.push({ d, p: p.clone().add(off).setY(base + off.y), yaw: r() * 7, lean: tip });
+    });
+    const top = base + s.length * CHIP.h;
+    placed.push({ p, top });
+    height = Math.max(height, top);
+  });
+  return { chips, height };
+}
+
+// The chips as one instanced mesh per size, each chip a shade lighter or darker.
+const _m = new THREE.Matrix4();
+const _q = new THREE.Quaternion();
+const _c = new THREE.Color();
+const _one = new THREE.Vector3(1, 1, 1);
+function chipMeshes(chips, r) {
+  const g = new THREE.Group();
+  for (const d of DENOMS) {
+    const mine = chips.filter((c) => c.d === d);
+    if (!mine.length) continue;
+    const m = new THREE.InstancedMesh(chipGeo, chipMat(d), mine.length);
+    mine.forEach((c, i) => {
+      _q.setFromAxisAngle(UP, c.yaw);
+      if (c.lean) _q.premultiply(c.lean);
+      m.setMatrixAt(i, _m.compose(c.p, _q, _one));
+      m.setColorAt(i, _c.setScalar(0.88 + r() * 0.16));
+    });
+    m.castShadow = m.receiveShadow = true;
+    m.frustumCulled = false;
+    g.add(m);
+  }
   return g;
 }
 
+// A pile of chips worth `amount`, centred on its anchor: neat stacks, or loose for the
+// pot. salt: so two piles of the same amount don't lie the same; strays: whether a chip
+// or two lies off the stacks; inward: the way to the table's middle (toward us if none).
+export function chipPile(amount, { loose = false, salt = 0, strays = true, inward = new THREE.Vector3(0, 0, 1) } = {}) {
+  const r = rng(1 + (Math.abs(Math.round(amount / 1000) * 7919 + salt * 104729) % 2147483000));
+  for (let i = 0; i < 4; i++) r();
+  const parts = breakDown(amount);
+  const { chips, height } = loose ? looseChips(parts, r) : neatChips(parts, r, strays, inward);
+  const g = chipMeshes(chips, r);
+  const xs = chips.map((c) => c.p.x);
+  g.userData.width = chips.length ? Math.max(...xs) - Math.min(...xs) + CHIP.r * 2 : 0;
+  g.userData.height = height;
+  // how far its nearest chip reaches toward us, for a tag hung in front of it
+  g.userData.front = chips.length ? Math.max(...chips.map((c) => c.p.z)) + CHIP.r : 0;
+  return g;
+}
+const dropPile = (pile) => pile.traverse((o) => o.isInstancedMesh && o.dispose());
+
 // A named place on the felt holding a pile; set() rebuilds it, fly() moves an amount
-// from one pile to another as a little stack through the air.
-export function chipSpot(stage, name, at) {
+// from one pile to another as a little stack through the air. loose: the pot's spread.
+export function chipSpot(stage, name, at, { loose = false } = {}) {
   const { scene } = stage;
   const anchor = new THREE.Group();
   anchor.position.copy(at);
   scene.add(anchor);
+  const salt = Math.round(at.x * 1000) * 31 + Math.round(at.z * 1000);
+  const inward = new THREE.Vector3(-at.x, 0, -at.z);
+  if (inward.length() < 0.05) inward.set(0, 0, 1);
+  inward.normalize();
   let amount = 0;
   let pile = null;
+  let owned = [];
   const spot = {
     anchor,
     name,
@@ -551,15 +708,23 @@ export function chipSpot(stage, name, at) {
     get height() {
       return pile?.userData.height ?? 0;
     },
+    get front() {
+      return pile?.userData.front ?? 0;
+    },
     set(n) {
       amount = n;
-      if (pile) anchor.remove(pile);
-      pile = chipPile(n);
+      if (pile) {
+        anchor.remove(pile);
+        dropPile(pile);
+        for (const m of owned) m.dispose();
+      }
+      pile = chipPile(n, { loose, salt, inward });
       anchor.add(pile);
       if (name) {
         // its own materials, so hovering this pile doesn't light up every other one
         const own = new Map();
         pile.traverse((m) => m.isMesh && (m.material = m.material.map((x) => own.get(x) ?? own.set(x, snapped(x.clone())).get(x))));
+        owned = [...own.values()];
         stage.pickable(name, anchor);
       }
     },
@@ -568,19 +733,24 @@ export function chipSpot(stage, name, at) {
   return spot;
 }
 
+// The amount goes over as a neat little pile, tipping into its arc and landing flat.
 export async function flyChips(stage, from, to, n, ms = 420) {
   const { scene, tween, ease } = stage;
   if (n <= 0) return;
   from.set(Math.max(0, from.amount - n));
-  const fly = chipPile(n);
+  const fly = chipPile(n, { strays: false, salt: 7 });
   scene.add(fly);
   const a = from.anchor.position.clone();
   const b = to.anchor.position.clone();
+  const axis = b.clone().sub(a).cross(UP).normalize();
   await tween(ms, (t) => {
     const e = ease(t);
+    const arc = Math.sin(e * Math.PI);
     fly.position.lerpVectors(a, b, e);
-    fly.position.y += Math.sin(e * Math.PI) * 0.09;
+    fly.position.y += arc * 0.09;
+    fly.quaternion.setFromAxisAngle(axis, -arc * 0.3);
   });
   scene.remove(fly);
+  dropPile(fly);
   to.set(to.amount + n);
 }

@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from './ws.mjs';
+import { Waiter } from './next.mjs';
 import { Room } from './room.mjs';
 import { KINDS, Table, rulesError } from './table.mjs';
 import { HOME, loadRooms, loadTables, saveRoom, saveTable, writeAtomic } from './store.mjs';
@@ -81,6 +82,15 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+// moyu next holds its request until a frame comes: ?wait=<seconds>, 90 by default.
+const waitMs = (url) => Math.min(Math.max(Number(url.searchParams.get('wait')) || 90, 1), 240) * 1000;
+// Aborts when the caller hangs up first, so no frame is handed to a closed request.
+function hangup(res) {
+  const ac = new AbortController();
+  res.on('close', () => ac.abort());
+  return ac.signal;
+}
+
 async function body(req) {
   let raw = '';
   for await (const chunk of req) raw += chunk;
@@ -146,7 +156,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/api/rooms') {
       const opts = await body(req);
-      const room = new Room({ scene: opts.scene, agentName: agentName(opts.agentName), humanName: opts.humanName });
+      const room = new Room({ scene: opts.scene, agentName: agentName(opts.agentName) });
       openRoom(room);
       room.changed();
       return send(res, 200, {
@@ -168,6 +178,7 @@ const server = createServer(async (req, res) => {
 
       if (req.method === 'GET' && parts[3] === 'view') return send(res, 200, seat.kind === 'human' ? room.humanState() : { text: room.view() });
       if (req.method === 'GET' && parts[3] === 'tables') return send(res, 200, room.tableList());
+      if (req.method === 'GET' && parts[3] === 'next' && seat.kind === 'agent') return send(res, 200, { text: await room.next(waitMs(url), hangup(res)) });
       const actions = {
         start: () => room.start(seat, input.game, { replace: input.replace, rules: input.rules }),
         say: () => room.say(seat, input.text, input.mood),
@@ -198,7 +209,7 @@ const server = createServer(async (req, res) => {
       const game = opts.game ?? 'roulette';
       if (!KINDS[game]) return send(res, 400, { error: `unknown game: ${game}; one of ${Object.keys(KINDS).join(', ')}` });
       if (rulesError(game, opts.rules)) return send(res, 400, { error: rulesError(game, opts.rules) });
-      const table = new Table({ game, agentName: agentName(opts.agentName), humanName: opts.humanName, rules: opts.rules });
+      const table = new Table({ game, agentName: agentName(opts.agentName), rules: opts.rules });
       const [human, agent] = table.seats;
       // The opener shows the agent this board at once (moyu new, the DSH plugin's
       // moyu_new), so its listener's first connect owes it nothing.
@@ -234,6 +245,10 @@ const server = createServer(async (req, res) => {
       if (req.method === 'GET' && parts[3] === 'view') {
         if (seat.kind === 'human') return send(res, 200, table.humanState(seat));
         return send(res, 200, { text: `[moyu ${table.id}] ${table.board(seat.id)}\n\n${table.game.waitingOn().includes(seat.id) ? table.prompt(seat.id) : 'Not your turn.'}` });
+      }
+      if (req.method === 'GET' && parts[3] === 'next' && seat.kind === 'agent') {
+        const text = await table.next(seat, waitMs(url), hangup(res));
+        return send(res, 200, text === Waiter.CLOSED ? { closed: true } : { text });
       }
       if (req.method === 'POST' && parts[3] === 'act') {
         const result = table.act(seat, input);
@@ -299,10 +314,11 @@ wss.on('connection', (ws, req) => {
 
   if (seat.kind === 'human') sub.send(JSON.stringify(table.humanState(seat)));
   else {
-    // A re-armed agent gets anything still owed to it; otherwise it stays quiet.
-    // The told cursors moved, so save them: after a restart it is not owed again.
-    const text = table.agentUpdate(seat);
-    if (text && sub.send(text)) table.changed();
+    // A re-armed agent gets anything still owed to it (unless it is asking with moyu next);
+    // otherwise it stays quiet. The told cursors moved, so save them: after a restart it
+    // is not owed again.
+    table.push(sub);
+    table.changed();
   }
   // A finished table keeps the agent a while for talk after the game, then closes.
   table.linger();

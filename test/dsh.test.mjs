@@ -100,7 +100,7 @@ const tableFile = (id) => JSON.parse(readFileSync(join(HOME, 'tables', `${id}.js
 
 test('tools, schemas and the skill are what DSH accepts', async () => {
   const h = host();
-  assert.deepEqual([...h.tools.keys()].sort(), ['call', 'double', 'fold', 'hit', 'keep', 'list', 'new', 'quit', 'room', 'rules', 'say', 'score', 'shoot', 'stand', 'start', 'use', 'verify', 'view'].map((v) => `moyu_${v}`));
+  assert.deepEqual([...h.tools.keys()].sort(), ['allin', 'bet', 'call', 'check', 'fold', 'hit', 'keep', 'list', 'new', 'quit', 'raise', 'room', 'rules', 'say', 'score', 'shoot', 'stand', 'start', 'use', 'verify', 'view'].map((v) => `moyu_${v}`));
   // Checked against the installed DSH's own schema rules when it is on this machine.
   const dshTools = join(process.env.APPDATA ?? join(homedir(), '.npm-global'), 'npm', 'node_modules', '@deepseek-ai', 'dsh', 'node_modules', '@deepseek-ai', 'dsh-tools', 'lib', 'index.js');
   const dsh = existsSync(dshTools) ? await import(pathToFileURL(dshTools)) : null;
@@ -134,7 +134,7 @@ test('tools, schemas and the skill are what DSH accepts', async () => {
 test('a table: the tool binds it to the session, every frame wakes it, and it stops at game over', async () => {
   const h = host();
   const agent = h.agent('s1');
-  const out = await h.call('moyu_new', { game: 'blackjack', human: 'C' }, 's1');
+  const out = await h.call('moyu_new', { game: 'blackjack' }, 's1');
   const human = humanOf(out);
   assert.match(out, /^Blackjack table [0-9a-f]+ open\. Sealed seed commit: [0-9a-f]+/);
   assert.match(out, /Listening: the moyu plugin wakes this session/);
@@ -149,7 +149,7 @@ test('a table: the tool binds it to the session, every frame wakes it, and it st
 
   assert.ok((await post(`/api/tables/${human.id}/say`, { k: human.k, text: 'hello there' })).ok);
   const said = await until(() => texts(agent).find((t) => t.includes('hello there')), 'the chat frame');
-  assert.ok(said.startsWith(`[moyu ${human.id}] C says: hello there`), said);
+  assert.ok(said.startsWith(`[moyu ${human.id}] Human says: hello there`), said);
   assert.equal(agent.woken[0].source.kind, 'moyu');
   assert.equal(agent.woken[0].role, 'user');
   assert.ok(Object.isFrozen(agent.woken[0].content[0]));
@@ -170,7 +170,7 @@ test('a table: the tool binds it to the session, every frame wakes it, and it st
   // Talk after the game still wakes it, once, and it can answer.
   assert.ok((await post(`/api/tables/${human.id}/say`, { k: human.k, text: '你咋这么坏' })).ok);
   const after = await until(() => texts(agent).find((t) => t.includes('你咋这么坏')), 'the post-game chat');
-  assert.equal(after, `[moyu ${human.id}] C says: 你咋这么坏\nGame over; reply with: moyu say "<text>" --table ${human.id}`);
+  assert.equal(after, `[moyu ${human.id}] Human says: 你咋这么坏\nGame over; reply with: moyu say "<text>" --table ${human.id}`);
   assert.equal(await h.call('moyu_say', { text: '运气而已 😏', table: human.id }, 's1'), `[moyu ${human.id}] Said. The game is over.`);
   assert.equal(texts(agent).filter((t) => /Game over\. Seed/.test(t)).length, 1);
 
@@ -209,7 +209,7 @@ test('cold: a session with no live agent is resumed to be woken; one that is gon
   });
   // The room is opened by a live agent, which then goes away (window closed, say).
   h.agent('s3');
-  const out = await h.call('moyu_room', { human: 'C', new: true }, 's3');
+  const out = await h.call('moyu_room', { new: true }, 's3');
   const room = humanOf(out);
   assert.match(out, /^Room [0-9a-f]+ open\./);
   h.dispose('s3');

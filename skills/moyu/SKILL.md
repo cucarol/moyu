@@ -14,7 +14,7 @@ Before starting, note in one line to yourself what you were doing (task, next st
 ## 1. Open the table
 
 ```
-moyu new --human "<user's name, if you know it>"
+moyu new
 ```
 
 This opens roulette (轮盘), the default. Add `--game blackjack` when the user asks for 21 点, `--game yacht` for 快艇骰子 / dice.
@@ -37,15 +37,20 @@ The user should not sit waiting on you. In the same response:
    ```
    Monitor({ ws: { url: "<your WebSocket URL>" }, description: "moyu <game> with <user>: my turns and chat", timeout_ms: 1800000 })
    ```
-3. In the main chat, one or two lines: the link, and whose move it is. Then end your turn.
+3. In the main chat, one or two lines: the link, and whose move it is. Then wait for the next frame with `moyu next --table <id>` (step 3).
 
-Do not poll, sleep, loop on `moyu view`, or ask the user to tell you when it's your move. The socket wakes you; ending your turn is how you wait.
+Do not poll, sleep, loop on `moyu view`, or ask the user to tell you when it's your move. `moyu next` waits for you, and when you're not asking, the listener wakes you.
 
 ## 3. The event loop
 
-Each frame arrives as a notification starting with `[moyu <id>]`. It comes on every move the user makes (a quick run of moves arrives as one frame, a moment later), and at once on your turn, on a chat line from the user, and at game over.
+A frame starts with `[moyu <id>]`. It comes on every move the user makes (a quick run of moves arrives as one frame, a moment later), and at once on your turn, on a chat line from the user, and at game over.
 
-- **Their move, not your turn yet** (the frame ends with `Waiting on <name>.`): you're watching. React on the table with `moyu say` only when the moment earns it (a big hit, a lucky blank, a round won), a few words at most; otherwise end your turn with nothing written.
+Play the game as one loop inside your turn: `moyu next --table <id>` waits (up to 90 s) and prints the next frame; handle it as below, then run `moyu next` again. Each frame is a tool result, not a new turn, so there is nothing to write in the chat. While you keep asking, the listener stays quiet; a frame that comes while you aren't asking (you ended your turn, or were doing other work) wakes you through the listener as usual, and you go back to the loop from there.
+
+- **`Nothing new yet`**: run `moyu next` again. After three empty waits in a row the user has stepped away: end your turn without a word, and the listener wakes you when they're back.
+- **Game over**: stop asking and go to step 5.
+
+- **Their move, not your turn yet** (the frame ends with `Waiting on <name>.`): you're watching. React on the table with `moyu say` only when the moment earns it (a big hit, a lucky blank, a round won), a few words at most; otherwise just wait for the next one.
 - **Your turn** (the frame ends with `Your turn: ...` or `Your move: ...`): run the exact command the prompt gives, with `--table <id>`, and usually a short `--say`. The command's output shows what happened; you don't need `view` afterwards.
 - **A chat line only** (`<name> says: ...`): answer on the table with `moyu say "<text>" --table <id>` if a reply fits. Not every line needs one.
 - **Both at once**: answer inside your move's `--say`.
@@ -82,7 +87,7 @@ The user can end early: on 「不玩了」/"stop" run `moyu quit --table <id>`, 
 A room is a place the user can leave open in a tab, game or no game. They pick a scene (海边露台: 21 点 and 快艇骰子; 机房: 轮盘), start games from the page, and chat with you between games. Open one when they ask for a room, or offer it when they say they'll play often.
 
 ```
-moyu room --human "<user's name>"
+moyu room
 ```
 
 It reopens the room you last opened if the server still has it (`--new` for a fresh one, `--scene machine` to start in the machine room). Give the user the human's link as a clickable markdown link. If the output says `Listening:`, the plugin follows the room; otherwise arm one Monitor on the `Listen on` URL with the same settings as above. Then end your turn.

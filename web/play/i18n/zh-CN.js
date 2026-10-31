@@ -108,8 +108,8 @@ export default {
           "lines": [
             "两人先下底注，各发两张：一张明牌，一张暗牌，暗牌只有自己看得到。",
             "轮流行动，每次一步：要牌，或者停牌。一方停了，另一方自己接着要，直到也停。",
-            "加倍：只能作为这一手的第一步。再押一份底注，只拿一张牌然后停；对面要么跟，要么弃牌认输这一手。",
-            "爆牌不公开：超过 21 点也不会自动结束，对面只看得到你的明牌点数。"
+            "下注：发完牌下一轮，两人都停牌后再下一轮。过牌，或者押一个底池；面对下注就跟、加一个底池，或者弃牌。加注不封顶，全押是押上对面跟得起的全部。",
+            "爆牌不公开：超过 21 点就只能停牌，对面只看得到你的明牌点数。爆了也照样可以下注。"
           ]
         },
         {
@@ -205,8 +205,7 @@ export default {
       "placeholder": "按 Enter 说话",
       "mock1": "哈哈，原型里的我还只会说几句",
       "mock2": "你说得对",
-      "renamedAgent": "你把 {from} 改名为 {to}",
-      "renamedYou": "你改名为 {to}"
+      "renamedAgent": "你把 {from} 改名为 {to}"
     },
     "settings": {
       "title": "设置",
@@ -394,22 +393,26 @@ export default {
     "blackjack": {
       "nudge": "该你了",
       "preview": "预览 · 开桌跟 Claude 说「来一局 21 点」",
-      "soft": "软 {n}",
-      "tag": "{name} {n}",
-      "tagShown": "{name} 明面 {n} + ?",
-      "tagBust": "{name} {n} 爆了",
+      "tagShown": "{n} + ?",
+      "tagBust": "{n} 爆了",
       "tagStood": "{tag} · 停",
       "pot": "底池 {n}",
       "hit": "要牌",
       "stand": "停牌",
-      "double": "加倍 +{ante}",
-      "call": "跟 {ante}",
+      "check": "过牌",
+      "bet": "下注 {n}",
+      "raise": "加注 +{n}",
+      "call": "跟 {n}",
       "fold": "弃牌",
+      "allin": "全押 {n}",
       "tips": {
         "hit": "从牌靴里再拿一张",
         "stand": "摇铃，这手就停在这",
-        "call": "对面加倍了：跟上，比到最后",
-        "double": "再押一份底注，只拿一张就停；对面要跟或者弃",
+        "call": "跟上对面的注，接着比",
+        "check": "敲桌：不下注，轮到对面",
+        "bet": "押一个底池的量；对面跟、加或者弃",
+        "raise": "先跟，再加一个底池；加注不封顶",
+        "allin": "押上对面跟得起的全部",
         "holeTitle": "你的暗牌",
         "hole": "紫边：只有你看得见，对面看到的是牌背",
         "fold": "不跟了，底池给对面"
@@ -419,8 +422,12 @@ export default {
       "hitLog": "{name}要了一张 {rank}",
       "bustSecret": "爆了，不过对面还不知道",
       "standLog": "{name}停牌",
-      "doubleToast": "{name}加倍 {amount}",
-      "doubleLog": "{name}加倍，再拿一张 {rank} 就停",
+      "checkLog": "{name}过牌",
+      "betLog": "{name}下注 {amount}",
+      "raiseLog": "{name}加注到 {amount}",
+      "allinLog": "{name}全押：{amount}",
+      "drawToast": "下注结束 · 开始要牌",
+      "lastToast": "都停了 · 最后一轮下注",
       "callLog": "{name}跟了 {amount}",
       "folded": "{name}弃牌",
       "busted": "{n} 爆",
@@ -437,7 +444,11 @@ export default {
       "wonToast": "{name}赢了",
       "overLog": "这局结束了，种子已公开，可以验证牌序没被动过",
       "head": "第 {round}/{rounds} 手",
-      "facing": "{head} · {name} 加倍了：跟 {ante}，还是弃牌",
+      "betTag": "{n} · 下注 {bet}",
+      "streetBet1": "下注",
+      "streetDraw": "要牌",
+      "streetBet2": "最后下注",
+      "facing": "{head} · 轮到你 · 跟 {n}",
       "yourTurn": "{head} · 轮到你 · {n} 点",
       "thinking": "{head} · {name} 在想",
       "overDraw": "这局结束了 · 打平",
@@ -450,8 +461,7 @@ export default {
       "titleBroke": "第 {round} 手 · 付不起底注了",
       "titleDone": "{rounds} 手打完",
       "gameOver": "这局结束了",
-      "theyWon": "{name} 赢了",
-      "sub": "{you} {mine} token · {name} {theirs} token"
+      "theyWon": "{name} 赢了"
     },
     "yacht": {
       "nudge": "该你掷了",
@@ -550,7 +560,6 @@ export default {
       "titleDone": "十二格填满",
       "gameOver": "这局结束了",
       "theyWon": "{name} 赢了",
-      "sub": "{you} {mine} 分 · {name} {theirs} 分",
       "points": "{n} 分"
     }
   }
