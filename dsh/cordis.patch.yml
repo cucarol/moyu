@@ -1,0 +1,5 @@
+# The moyu plugin row. The path is relative to this file, so the bundle works linked
+# in place from the moyu checkout.
+- insert:
+    - id: moyu
+      name: ./index.js

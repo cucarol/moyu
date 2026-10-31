@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>moyu</title>
+  <link rel="icon" href="/web/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/web/play/style.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div class="hud">
+    <header class="top">
+      <div class="brand">moyu<span id="game-name"></span></div>
+      <div class="pill" id="pill"><span class="dot"></span><span id="pill-text"></span></div>
+      <div class="corner">
+        <button class="pixbtn" id="open-games" title="">▦</button>
+        <button class="pixbtn" id="open-settings" title="">⚙</button>
+      </div>
+    </header>
+
+    <div class="bubble" id="opp-bubble" hidden></div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="toast" id="toast" hidden></div>
+
+    <footer class="bottom">
+      <ol class="log" id="log"></ol>
+      <div class="bar">
+        <form class="say" id="say-form">
+          <span class="caret">›</span>
+          <input id="say" autocomplete="off" maxlength="200" placeholder="">
+        </form>
+        <div class="emotes" id="emotes"></div>
+      </div>
+    </footer>
+
+    <section class="window" id="games" hidden>
+      <div class="window-title"> <button class="x" data-close>×</button></div>
+      <ul class="gamelist" id="gamelist"></ul>
+    </section>
+  </div>
+
+  <script type="module" src="/web/play/main.js"></script>
+</body>
+</html>

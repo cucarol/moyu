@@ -1,0 +1,36 @@
+{
+  "name": "moyu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Play luck games (roulette, 21, Yacht dice) with your AI agent, fully automatic: a Claude Code plugin and a DSH bundle",
+  "license": "MIT",
+  "author": "cucarol",
+  "homepage": "https://github.com/cucarol/moyu#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cucarol/moyu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cucarol/moyu/issues"
+  },
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "agent",
+    "game",
+    "roulette",
+    "blackjack",
+    "yacht",
+    "moyu"
+  ],
+  "type": "module",
+  "bin": {
+    "moyu": "cli/moyu.mjs"
+  },
+  "scripts": {
+    "server": "node server/main.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
