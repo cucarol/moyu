@@ -20,9 +20,9 @@ const GREY = 0x8c8682;
 const EYE = '#0a0a10';
 const SWEAT = '#8fd8ff';
 const BLUSH = '#ff9f9f';
-const THROAT = '#5a0a14';
-// the mouth while it talks, by how open: [width, height] in face cells
-const MOUTHS = { 1: [4, 1], 2: [4, 2], 3: [6, 3], 4: [10, 3] };
+// its mouths, one stroke each, the same set as everywhere Clawd is: 1 short and 2 long
+// (talking and yawning use these two), 3 wave
+const MOUTHS = { 1: ['XX'], 2: ['XXXX'], 3: ['.X.X', 'X.X.'] };
 
 // Eye bitmaps for the left eye (on your left); the right one is mirrored. 'X' is the
 // eye colour, centred on the eye's spot.
@@ -30,7 +30,7 @@ const EYES = {
   open: ['XX', 'XX', 'XX', 'XX'],
   blink: ['XX'],
   squint: ['XX', 'XX'],
-  shut: ['XXX', 'X.X'],
+  shut: ['XXXX'],
   happy: ['.XX.', 'X..X'],
   wide: ['XXX', 'XXX', 'XXX', 'XXX', 'XXX'],
   hurt: ['X..', '.X.', '..X', '.X.', 'X..'],
@@ -41,6 +41,10 @@ const EYES = {
   sad: ['..X', '.XX', 'XXX', 'XXX'],
   spiral: ['XXXX', 'X...', 'X.XX', 'X..X', 'XXXX'],
   sleep: ['...', 'XXX'],
+  content: ['X..X', '.XX.'],
+  grit: ['XX.', 'XXX', 'XXX'],
+  tired: ['..X', 'XXX'],
+  tiny: ['X'],
   off: [],
 };
 const EYE_AT = [[7, 5], [16, 5]]; // centre cells of the two eyes, from the top left
@@ -224,17 +228,11 @@ export default {
           fctx.fillRect(cx + (i ? 1 : -1), cy + 3, 1, 2);
         }
       });
-      // No mouth at rest, like the mascot; it only opens while it talks, and a loud
-      // blip opens it wider than a mouth should go.
+      // No mouth at rest, like the mascot; it only shows while it talks or yawns, and
+      // never opens: one stroke, longer for a loud blip.
       if (f.mouth) {
-        const [w, h] = MOUTHS[f.mouth];
-        const x0 = 12 - w / 2;
         fctx.fillStyle = EYE;
-        fctx.fillRect(x0, 10, w, h);
-        if (h > 2) {
-          fctx.fillStyle = THROAT;
-          fctx.fillRect(x0 + 1, 11, w - 2, h - 2);
-        }
+        MOUTHS[f.mouth].forEach((r, j) => [...r].forEach((ch, k) => ch === 'X' && fctx.fillRect(12 - r.length / 2 + k, 10 + j, 1, 1)));
       }
       if (f.sweat) {
         fctx.fillStyle = SWEAT;
@@ -915,7 +913,7 @@ export default {
       yawn(c) {
         const { k } = c;
         const open = k < 0.15 ? k / 0.15 : k < 0.68 ? 1 : Math.max(0, 1 - (k - 0.68) / 0.14);
-        P.mouth = open > 0.85 ? 4 : open > 0.5 ? 3 : open > 0.15 ? 2 : open > 0 ? 1 : 0; // the widest slab it has
+        P.mouth = open > 0.4 ? 2 : open > 0 ? 1 : 0; // the longest stroke it has
         P.eyes = k < 0.12 ? 'squint' : k < 0.84 ? 'shut' : 'flat';
         P.blink = false;
         const st = wave(Math.min(1, k / 0.8)); // the stretch
@@ -983,7 +981,7 @@ export default {
       mouthAmt = b.loud;
       jolt = b.loud;
       lastBlip = b.last;
-      // the last one hangs open a beat too long, then snaps shut
+      // the last one hangs a beat too long, then snaps away
       mouthUntil = now + b.dur * (0.5 + 0.5 * b.loud) + (b.last ? 220 : 0);
     }
     function frame(f) {
@@ -1043,8 +1041,8 @@ export default {
         if (f.now > blinkAt + 120) blinkAt = f.now + 2000 + Math.random() * 3500;
       }
       let mouth = 0;
-      if (f.now < mouthUntil) mouth = lastBlip ? 2 : mouthAmt > 0.85 ? 4 : mouthAmt > 0.55 ? 3 : mouthAmt > 0.25 ? 2 : 1;
-      mouth = Math.max(mouth, P.mouth); // a yawn opens it too
+      if (f.now < mouthUntil) mouth = lastBlip || mouthAmt > 0.5 ? 2 : 1;
+      mouth = Math.max(mouth, P.mouth); // a yawn draws it out too
       drawFace({ eyes, lx: P.lx, ly: P.ly, sweat: P.sweat, blush: P.blush, tear: P.tear || (eyes === 'sad' && f.mood === 'sad'), mouth }, tmp.getHexString());
 
       spinner.visible = P.spinner;
